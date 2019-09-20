@@ -6,6 +6,7 @@ import bdv.tools.brightness.ConverterSetup;
 import bdv.tools.brightness.MinMaxGroup;
 import bdv.tools.brightness.SetupAssignments;
 import bdv.tools.transformation.ManualTransformationEditor;
+import bdv.viewer.Source;
 import bdv.viewer.SourceAndConverter;
 import bdv.viewer.TimePointListener;
 import bdv.viewer.ViewerPanel;
@@ -120,8 +121,10 @@ public abstract class BdvHandle implements Bdv
 			}
 
 			if ( sources != null )
-				for ( final SourceAndConverter< ? > soc : sources )
-					viewer.addSource( soc );
+				for ( final SourceAndConverter< ? > soc : sources ) {
+					viewer.addSource(soc);
+					notifySourceAdded(soc.getSpimSource());
+				}
 		}
 
 		if ( initTransform )
@@ -188,15 +191,17 @@ public abstract class BdvHandle implements Bdv
 				viewer.getDisplay().removeOverlayRenderer( o );
 
 		if ( sources != null )
-			for ( final SourceAndConverter< ? > soc : sources )
-				viewer.removeSource( soc.getSpimSource() );
+			for ( final SourceAndConverter< ? > soc : sources ) {
+				viewer.removeSource(soc.getSpimSource());
+				notifySourceAdded(soc.getSpimSource());
+			}
 	}
 
 	public interface SourceChangeListener
 	{
-		void sourceAdded( final BdvSource source );
+		void sourceAdded( final Source source );
 
-		void sourceRemoved( final BdvSource source );
+		void sourceRemoved( final Source source );
 	}
 
 	private final Listeners.List< SourceChangeListener > sourceChangeListeners = new Listeners.SynchronizedList<>();
@@ -206,12 +211,12 @@ public abstract class BdvHandle implements Bdv
 		return sourceChangeListeners;
 	}
 
-	void notifySourceAdded( final BdvSource source )
+	void notifySourceAdded( final Source source )
 	{
 		sourceChangeListeners.list.forEach( l -> l.sourceAdded( source ) );
 	}
 
-	void notifySourceRemoved( final BdvSource source )
+	void notifySourceRemoved( final Source source )
 	{
 		sourceChangeListeners.list.forEach( l -> l.sourceRemoved( source ) );
 	}
@@ -221,7 +226,6 @@ public abstract class BdvHandle implements Bdv
 		bdvSources.add( bdvSource );
 		updateHasPlaceHolderSources();
 		updateNumTimepoints();
-		notifySourceAdded( bdvSource );
 	}
 
 	void removeBdvSource( final BdvSource bdvSource )
@@ -229,7 +233,6 @@ public abstract class BdvHandle implements Bdv
 		bdvSources.remove( bdvSource );
 		updateHasPlaceHolderSources();
 		updateNumTimepoints();
-		notifySourceRemoved( bdvSource );
 	}
 
 	void updateHasPlaceHolderSources()

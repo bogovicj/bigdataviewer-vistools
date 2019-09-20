@@ -29,7 +29,7 @@
 package bdv.util.uipanel;
 
 import bdv.util.Affine3DHelpers;
-import bdv.util.BdvSource;
+
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -93,17 +93,13 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 
 	private VisibilityAndGrouping visGro;
 
-	private final Map< String, AffineTransform3D > transformationLookup = new HashMap<>();
+	private final Map<Source, AffineTransform3D> transformationLookup = new HashMap<Source, AffineTransform3D>();
 
 	private boolean isOverlay = false;
 
 	/**
 	 * Panel holding the controls of the viewer and individual transformation.
 	 *
-	 * @param es
-	 *            the event-service
-	 * @param controller
-	 *            the BDV controller
 	 */
 	public TransformationPanel( final TriggerBehaviourBindings triggerBindings,
 			final ManualTransformationEditor manualTransformationEditor, final ViewerPanel viewerPanel )
@@ -219,7 +215,7 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 				{
 					( ( TransformedSource< ? > ) s ).getFixedTransform( t );
 				}
-				transformationLookup.put( s.getName(), t );
+				transformationLookup.put( s, t );
 			}
 		}
 		else
@@ -233,7 +229,7 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 					( ( TransformedSource< ? > ) source ).getFixedTransform( t );
 				}
 				transformationLookup
-						.put( viewerPanel.getState().getSources().get( currentSource ).getSpimSource().getName(), t );
+						.put( viewerPanel.getState().getSources().get( currentSource ).getSpimSource(), t );
 			}
 
 		}
@@ -286,7 +282,7 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 								( ( TransformedSource< ? > ) source ).setFixedTransform( new AffineTransform3D() );
 								( ( TransformedSource< ? > ) source ).setIncrementalTransform( new AffineTransform3D() );
 								( ( TransformedSource< ? > ) source )
-										.setIncrementalTransform( transformationLookup.get( source.getName() ) );
+										.setIncrementalTransform( transformationLookup.get( source ) );
 							}
 						}
 						viewerPanel.setCurrentViewerTransform( createViewerInitTransformation() );
@@ -511,16 +507,16 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 	}
 
 	@Override
-	public void sourceAdded( final BdvSource source )
+	public void sourceAdded( final Source source )
 	{
-		transformationLookup.put( source.getName(),
+		transformationLookup.put( source,
 				getInitialTransformation( viewerPanel.getVisibilityAndGrouping().getCurrentSource() ) );
 	}
 
 	@Override
-	public void sourceRemoved( final BdvSource source )
+	public void sourceRemoved( final Source source )
 	{
-		transformationLookup.remove( source.getName() );
+		transformationLookup.remove( source );
 	}
 
 	@Override

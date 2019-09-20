@@ -28,6 +28,10 @@
  */
 package bdv.util.uipanel;
 
+import bdv.util.BdvSource;
+import bdv.viewer.Source;
+import bdv.viewer.state.SourceState;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -40,7 +44,7 @@ import java.util.Set;
  */
 public class GroupProperties {
 	private String groupName;
-	private Set<String> sourceNames;
+	private Set<Source> sources;
 	private boolean visibility;
 
 	/**
@@ -50,10 +54,10 @@ public class GroupProperties {
 	 * @param sourceName name of the source to add
 	 * @param visibility of this group
 	 */
-	public GroupProperties(final String groupName, final String sourceName, final boolean visibility) {
+	public GroupProperties(final String groupName, final Source sourceName, final boolean visibility) {
 		this.groupName = groupName;
-		this.sourceNames = new HashSet<>();
-		this.sourceNames.add(sourceName);
+		this.sources = new HashSet<Source>();
+		this.sources.add(sourceName);
 		this.visibility = visibility;
 	}
 
@@ -65,7 +69,7 @@ public class GroupProperties {
 	 */
 	public GroupProperties(final String groupName, final boolean visibility) {
 		this.groupName = groupName;
-		this.sourceNames = new HashSet<>();
+		this.sources = new HashSet<Source>();
 		this.visibility = visibility;
 	}
 
@@ -82,26 +86,26 @@ public class GroupProperties {
 	 *
 	 * @return names of the sources
 	 */
-	public Set<String> getSourceNames() {
-		return sourceNames;
+	public Set<Source> getSources() {
+		return sources;
 	}
 
 	/**
 	 * Add a source to this group.
 	 *
-	 * @param sourceName name of the source to add
+	 * @param source name of the source to add
 	 */
-	public void addSource(final String sourceName) {
-		sourceNames.add(sourceName);
+	public void addSource(final Source source) {
+		sources.add(source);
 	}
 
 	/**
 	 * Remove a source from this group.
 	 *
-	 * @param sourceName of the source to remove
+	 * @param source of the source to remove
 	 */
-	public void removeSource(final String sourceName) {
-		sourceNames.remove(sourceName);
+	public void removeSource(final Source source) {
+		sources.remove(source);
 	}
 
 	/**

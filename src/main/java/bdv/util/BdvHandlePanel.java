@@ -140,6 +140,11 @@ public class BdvHandlePanel extends BdvHandle
 	}
 
 	@Override
+	void addBdvSource(BdvSource bdvSource) {
+		super.addBdvSource(bdvSource);
+	}
+
+	@Override
 	public void close()
 	{
 		viewer.stop();

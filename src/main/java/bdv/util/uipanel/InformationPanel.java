@@ -55,9 +55,6 @@ public class InformationPanel extends JPanel
 	/**
 	 * An information panel displaying information about the currently selected
 	 * source.
-	 *
-	 * @param es
-	 *            the event-service
 	 */
 	public InformationPanel()
 	{

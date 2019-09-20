@@ -29,6 +29,7 @@
 package bdv.util.uipanel;
 
 import bdv.util.BdvSource;
+import bdv.viewer.ViewerPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -56,6 +57,7 @@ import javax.swing.event.ChangeListener;
 
 import bdv.tools.brightness.SetupAssignments;
 import bdv.util.uipanel.rangeslider.RangeSlider;
+import bdv.viewer.Source;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import net.miginfocom.swing.MigLayout;
@@ -86,6 +88,11 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 * Setup assignments of the viewer.
 	 */
 	private final SetupAssignments setupAssignments;
+
+	/**
+	 * Bdv viewer panel.
+	 */
+	private final ViewerPanel viewerPanel;
 
 	/**
 	 * The range slider.
@@ -120,12 +127,12 @@ public class RangeSliderSpinnerPanel extends JPanel
 	/**
 	 * Store the lower bound for every source.
 	 */
-	private final HashMap< Integer, Double > lowerBoundLookup = new HashMap<>();
+	private final HashMap< Source, Double > lowerBoundLookup = new HashMap<>();
 
 	/**
 	 * Store the upper bound for every source.
 	 */
-	private final HashMap< Integer, Double > upperBoundLookup = new HashMap<>();
+	private final HashMap< Source, Double > upperBoundLookup = new HashMap<>();
 
 	/**
 	 * The minimum spinner.
@@ -203,12 +210,15 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 * A range slider panel with two knobs and min/max spinners.
 	 *
 	 */
-	public RangeSliderSpinnerPanel( final SetupAssignments setupAssignments, final Map< String, BdvSource > sourceLookup )
+	public RangeSliderSpinnerPanel( final SetupAssignments setupAssignments, final ViewerPanel vp )
 	{
+
 		this.labelingMinMax = new HashMap<>();
 		setupPanel();
 
 		this.setupAssignments = setupAssignments;
+
+		this.viewerPanel = vp;
 
 		currentMinSpinner = new JSpinner( new SpinnerNumberModel( 0.0, 0.0, 1.0, 1.0 ) );
 		setupMinSpinner();
@@ -277,8 +287,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 					upperBound.updateListeners();
 					lowerValue.updateListeners();
 					upperValue.updateListeners();
-					upperBoundLookup.put( currentSourceIdx, upperValue.getValue() );
-					lowerBoundLookup.put( currentSourceIdx, lowerValue.getValue() );
+					upperBoundLookup.put( viewerPanel.getState().getSources().get( currentSourceIdx ).getSpimSource(), upperValue.getValue() );
+					lowerBoundLookup.put( viewerPanel.getState().getSources().get( currentSourceIdx ).getSpimSource(), lowerValue.getValue() );
 					rs.setValue( 0 );
 					rs.setUpperValue( RS_UPPER_BOUND );
 				}
@@ -496,7 +506,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 						if ( tmp > upperBound.getValue() )
 						{
 							upperBound.setValue( tmp );
-							upperBoundLookup.put( currentSourceIdx, upperBound.getValue() );
+							upperBoundLookup.put( viewerPanel.getState().getSources().get( currentSourceIdx ).getSpimSource(), upperBound.getValue() );
 							upperValue.setValue( tmp );
 							upperBound.updateListeners();
 							upperValue.updateListeners();
@@ -556,7 +566,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 						if ( tmp < lowerBound.getValue() )
 						{
 							lowerBound.setValue( tmp );
-							lowerBoundLookup.put( currentSourceIdx, lowerBound.getValue() );
+							lowerBoundLookup.put( viewerPanel.getState().getSources().get( currentSourceIdx ).getSpimSource(), lowerBound.getValue() );
 							lowerValue.setValue( tmp );
 							lowerBound.updateListeners();
 							lowerValue.updateListeners();
@@ -583,10 +593,6 @@ public class RangeSliderSpinnerPanel extends JPanel
 	/**
 	 * Set display range in setup-assignments.
 	 *
-	 * @param min
-	 *            of display range
-	 * @param max
-	 *            of display range
 	 */
 	private void setDisplayRange()
 	{
@@ -630,18 +636,18 @@ public class RangeSliderSpinnerPanel extends JPanel
 		return val;
 	}
 
-	public synchronized void setSource( final int i )
+	public synchronized void setSource( final Source src)
 	{
+		currentSourceIdx = SelectionAndGroupingTabs.getSourceIndex( src, viewerPanel );
 		currentMaxSpinner.removeChangeListener( maxSpinnerCL );
 		currentMinSpinner.removeChangeListener( minSpinnerCL );
-		currentSourceIdx = i;
-		if ( lowerBoundLookup.containsKey( currentSourceIdx ) )
+		if ( lowerBoundLookup.containsKey( src ) )
 		{
-			lowerBound.setValue( lowerBoundLookup.get( currentSourceIdx ) );
-			upperBound.setValue( upperBoundLookup.get( currentSourceIdx ) );
+			lowerBound.setValue( lowerBoundLookup.get( src ) );
+			upperBound.setValue( upperBoundLookup.get( src ) );
 			if ( isLabeling )
 			{
-				final Pair< Double, Double > p = labelingMinMax.get( currentSourceIdx );
+				final Pair< Double, Double > p = labelingMinMax.get( src );
 				lowerValue.setValue( p.getA() );
 				upperValue.setValue( p.getB() );
 			}
@@ -672,34 +678,16 @@ public class RangeSliderSpinnerPanel extends JPanel
 		}
 	}
 
-	public void addSource( final int srcIdx )
+	public void addSource( final Source src )
 	{
-		currentMaxSpinner.removeChangeListener( maxSpinnerCL );
-		currentMinSpinner.removeChangeListener( minSpinnerCL );
-		currentSourceIdx = srcIdx;
-		final double displayRangeMin = setupAssignments.getConverterSetups().get( currentSourceIdx ).getDisplayRangeMin();
-		final double displayRangeMax = setupAssignments.getConverterSetups().get( currentSourceIdx ).getDisplayRangeMax();
-		lowerBound.setValue( displayRangeMin );
-		lowerValue.setValue( displayRangeMin );
-		upperBound.setValue( displayRangeMax );
-		upperValue.setValue( displayRangeMax );
+		final double displayRangeMin = setupAssignments.getConverterSetups().get( SelectionAndGroupingTabs.getSourceIndex( src, viewerPanel ) ).getDisplayRangeMin();
+		final double displayRangeMax = setupAssignments.getConverterSetups().get( SelectionAndGroupingTabs.getSourceIndex( src, viewerPanel ) ).getDisplayRangeMax();
 
-		lowerBoundLookup.put( currentSourceIdx, displayRangeMin );
-
-		upperBoundLookup.put( currentSourceIdx, displayRangeMax );
-
-		( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).setMinimum( lowerBound.getValue() );
-		( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).setMaximum( upperBound.getValue() );
-		( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).setMinimum( lowerBound.getValue() );
-		( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).setMaximum( upperBound.getValue() );
-
-		lowerValue.updateListeners();
-		upperValue.updateListeners();
-		currentMaxSpinner.addChangeListener( maxSpinnerCL );
-		currentMinSpinner.addChangeListener( minSpinnerCL );
+		lowerBoundLookup.put( src, displayRangeMin );
+		upperBoundLookup.put( src, displayRangeMax );
 	}
 
-	public synchronized void removeSource( final BdvSource source )
+	public synchronized void removeSource( final Source source )
 	{
 		final int sourceID = currentSourceIdx;
 		lowerBoundLookup.remove( sourceID );
