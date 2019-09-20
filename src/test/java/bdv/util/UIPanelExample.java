@@ -8,8 +8,10 @@ import javax.swing.JFrame;
 import javax.swing.WindowConstants;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.basictypeaccess.array.IntArray;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.real.FloatType;
 
 public class UIPanelExample
 {
@@ -17,9 +19,11 @@ public class UIPanelExample
 	{
 		System.setProperty( "apple.laf.useScreenMenuBar", "true" );
 
-		final ArrayImg< ARGBType, IntArray > img = ArrayImgs.argbs( 100, 100, 100 );
+		final ArrayImg< ARGBType, IntArray > img = ArrayImgs.argbs( 100, 100, 2 );
+		final ArrayImg< FloatType, FloatArray > img_float = ArrayImgs.floats( 200, 100 );
 		final Random random = new Random();
 		img.forEach( t -> t.set( random.nextInt() ) );
+		img_float.forEach( t -> t.set( random.nextFloat() * 65000 ) );
 
 		final JFrame frame = new JFrame( "my test frame" );
 		final BdvUIPanel bdv = new BdvUIPanel( frame, Bdv.options().is2D() );
@@ -30,6 +34,7 @@ public class UIPanelExample
 		frame.setDefaultCloseOperation( WindowConstants.DISPOSE_ON_CLOSE );
 		frame.setVisible( true );
 
-		BdvFunctions.show( img, "img", Bdv.options().addTo( bdv ) );
+		BdvFunctions.show( img, "img", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XYC ) );
+		BdvFunctions.show( img_float, "test", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XY ) );
 	}
 }
