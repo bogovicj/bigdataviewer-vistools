@@ -48,6 +48,7 @@ import net.imglib2.RealRandomAccess;
 import net.imglib2.RealRandomAccessible;
 import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.realtransform.RealViews;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.IntegerType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.ui.OverlayRenderer;
@@ -81,8 +82,6 @@ public class IntensityMouseOverOverlay< L, I extends IntegerType< I > >
 	 *
 	 * @param viewerPanel
 	 *            of the BDV
-	 * @param convs
-	 *            the converters
 	 */
 	public IntensityMouseOverOverlay( final ViewerPanel viewerPanel )
 	{
@@ -143,6 +142,10 @@ public class IntensityMouseOverOverlay< L, I extends IntegerType< I > >
 		if ( type instanceof RealType )
 		{
 			intensity = String.format( "value = %6.3f", ( ( RealType< ? > ) type ).getRealDouble() );
+		}
+		else if ( type instanceof ARGBType )
+		{
+			intensity = String.format( "value = (%d, %d, %d)", ARGBType.red( ( ( ARGBType ) type ).get() ), ARGBType.green( ( ( ARGBType ) type ).get() ), ARGBType.blue( ( ( ARGBType ) type ).get() ) );
 		}
 	}
 
