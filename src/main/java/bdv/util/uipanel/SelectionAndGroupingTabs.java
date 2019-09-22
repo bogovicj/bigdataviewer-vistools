@@ -122,14 +122,66 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	private JComboBox< String > groupesComboBox;
 
 	/**
-	 * Map holding the source names mapped to the {@link Source}.
+	 * Maps sources to/from unique names.
 	 */
-	private final Map< String, Source< ? > > sourceLookup = new HashMap<>();
+	static class SourceNameBimap // TODO move to separate file
+	{
+		private final Map< Source< ? >, String > sourceToName = new HashMap<>();
+		private final Map< String, Source< ? > > nameToSource = new HashMap<>();
 
-	/**
-	 * Source to display name map.
-	 */
-	private final Map< Source< ? >, String > sourceNames = new HashMap<>();
+		public synchronized String add( final Source< ? > source )
+		{
+			if ( contains( source ) )
+				throw new IllegalArgumentException();
+
+			final String name = uniqueName( source.getName() );
+			sourceToName.put( source, name );
+			nameToSource.put( name, source );
+			return name;
+		}
+
+		public synchronized String remove( final Source< ? > source )
+		{
+			final String name = sourceToName.remove( source );
+			if ( name != null )
+				nameToSource.remove( name );
+			return name;
+		}
+
+		public synchronized boolean contains( final Source< ? > source )
+		{
+			return sourceToName.containsKey( source );
+		}
+
+		public synchronized String getName( final Source< ? > source )
+		{
+			return sourceToName.get( source );
+		}
+
+		public String getName( final SourceState< ? > source )
+		{
+			return getName( source.getSpimSource() );
+		}
+
+		public synchronized Source< ? > getSource( final String name )
+		{
+			return nameToSource.get( name );
+		}
+
+		private String uniqueName( final String name )
+		{
+			String prefix = "";
+			int i = 0;
+			while ( nameToSource.containsKey( prefix + name ) )
+			{
+				prefix = i + "_";
+				i++;
+			}
+			return prefix + name;
+		}
+	}
+
+	private final SourceNameBimap sourceNameBimap = new SourceNameBimap();
 
 	/**
 	 * Map holding the group names mapped to the {@link GroupProperties}.
@@ -440,33 +492,18 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	@Override
 	public synchronized void sourceAdded( final Source< ? > p )
 	{
-		final String name = uniqueName( p.getName() );
-
-		sourceNames.put( p, name );
-		sourceLookup.put( name, p );
+		final String uniqueName = sourceNameBimap.add( p );
 
 		this.visGro.addSourceToGroup( getSourceIndex( p, viewerPanel ), 0 );
 		groupLookup.get( getGroup( "All" ) ).addSource( p );
 
-		sourcesComboBox.addItem( name );
+		sourcesComboBox.addItem( uniqueName );
 		intensitySlider.addSource( p );
 
 		sourcesComboBox.setSelectedIndex( getCurrentSourceIndex( viewerPanel ) );
 		intensitySlider.setSource( getCurrentSource( viewerPanel ) );
 		groupesComboBox.setSelectedIndex( getCurrentGroupIndex( viewerPanel ) + 1 );
 		updateGroupSourceComponent();
-	}
-
-	private String uniqueName( final String name )
-	{
-		String prefix = "";
-		int i = 0;
-		while ( sourceLookup.containsKey( prefix + name ) )
-		{
-			prefix = i + "_";
-			i++;
-		}
-		return prefix + name;
 	}
 
 	/**
@@ -478,10 +515,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		intensitySlider.removeSource( source );
 		for ( final GroupProperties group : groupLookup.values() )
 		{
-			group.getSources().remove( source.getName() );
+			group.getSources().remove( source );
 		}
 		sourcesComboBox.removeItem( source.getName() );
-		sourceLookup.remove( source.getName() );
+		sourceNameBimap.remove( source );
 	}
 
 	private void setEnableVisibilityIcons( final boolean active )
@@ -508,7 +545,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				}
 				sourceVisibilityLabel.setEnabled( true );
 
-				final boolean visible = visGro.isSourceActive( getSourceIndex( getBdvSource( ( String ) sourcesComboBox.getSelectedItem() ), viewerPanel ) );
+				final boolean visible = visGro.isSourceActive( getSourceIndex( sourceNameBimap.getSource( ( String ) sourcesComboBox.getSelectedItem() ), viewerPanel ) );
 				if ( visible )
 				{
 					sourceVisibilityLabel.setIcon( visibleIcon );
@@ -629,7 +666,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				if ( e.getStateChange() == ItemEvent.SELECTED )
 				{
 					sourcesComboBox.setToolTipText( ( String ) sourcesComboBox.getSelectedItem() );
-					final Source< ? > p = sourceLookup.get( sourcesComboBox.getSelectedItem() );
+					final Source< ? > p = sourceNameBimap.getSource( ( String ) sourcesComboBox.getSelectedItem() );
 					notifySelectionChangeListeners( false );
 					if ( p != null )
 					{
@@ -732,7 +769,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 	private Component createEntry( final SourceState< ? > t )
 	{
-		final JLabel p = new JLabel( sourceNames.get( t.getSpimSource() ) );
+		final JLabel p = new JLabel( sourceNameBimap.getName( t ) );
 		p.setBackground( BACKGROUND_COLOR );
 		p.setForeground( FOREGROUND_COLOR );
 		p.setBorder( null );
@@ -1074,7 +1111,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				this.setText( value );
 				this.setToolTipText( value );
 				this.setIcon( visibleIconSmall );
-				final boolean visible = visGro.isSourceActive( getSourceIndex( getBdvSource( value ), viewerPanel ) );
+				final boolean visible = visGro.isSourceActive( getSourceIndex( sourceNameBimap.getSource( value ), viewerPanel ) );
 				if ( !singleSourceMode && !visible )
 				{
 					this.setIcon( notVisibleIconSmall );
@@ -1097,11 +1134,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			return this;
 		}
 
-	}
-
-	private Source< ? > getBdvSource( final String value )
-	{
-		return sourceLookup.get( value );
 	}
 
 	// A combobox renderer displaying the visibility state of the groups.
@@ -1183,7 +1215,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 	protected Source< ? > getSource( final String name )
 	{
-		return viewerPanel.getState().getSources().get( getSourceIndex( sourceLookup.get( name ), viewerPanel ) ).getSpimSource();
+		return viewerPanel.getState().getSources().get( getSourceIndex( sourceNameBimap.getSource( name ), viewerPanel ) ).getSpimSource();
 	}
 
 	protected static int getSourceIndex( final Source< ? > src, final ViewerPanel viewerPanel )
