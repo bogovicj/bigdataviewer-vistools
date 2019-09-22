@@ -160,7 +160,7 @@ public class BdvUIPanel extends BdvHandle
 		controls.addNewCard( new JLabel( "Selection" ), true, selectionAndGroupingPanel );
 
 		transformationPanel = new TransformationPanel( triggerbindings, manualTransformationEditor, viewer );
-		selectionAndGroupingPanel.addSelectionChangeListener( transformationPanel );
+		selectionAndGroupingPanel.selectionChangeListeners().add( transformationPanel );
 		this.sourceChangeListeners().add( transformationPanel );
 		controls.addNewCard( new JLabel( "Navigation" ), true, transformationPanel );
 

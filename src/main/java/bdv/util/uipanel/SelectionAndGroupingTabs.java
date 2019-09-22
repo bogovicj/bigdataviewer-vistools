@@ -71,6 +71,8 @@ import javax.swing.plaf.basic.BasicSplitPaneUI;
 import net.imglib2.type.numeric.ARGBType;
 import net.miginfocom.swing.MigLayout;
 
+import org.scijava.listeners.Listeners;
+
 import bdv.tools.brightness.ConverterSetup;
 import bdv.tools.brightness.SetupAssignments;
 import bdv.tools.transformation.ManualTransformActiveListener;
@@ -243,7 +245,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Subscribers to selection changes.
 	 */
-	private final List< SelectionChangeListener > selectionChangeListeners = new ArrayList<>();
+	private final Listeners.List< SelectionChangeListener > selectionChangeListeners = new Listeners.SynchronizedList<>();
 
 	/**
 	 * This class holds the selection and grouping tab of the big data viewer
@@ -1222,21 +1224,13 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		public void selectionChanged( final boolean isOverlay );
 	}
 
+	public Listeners< SelectionChangeListener > selectionChangeListeners()
+	{
+		return selectionChangeListeners;
+	}
+
 	private void notifySelectionChangeListeners( final boolean isOverlay )
 	{
-		for ( final SelectionChangeListener l : this.selectionChangeListeners )
-		{
-			l.selectionChanged( isOverlay );
-		}
-	}
-
-	public void addSelectionChangeListener( final SelectionChangeListener l )
-	{
-		this.selectionChangeListeners.add( l );
-	}
-
-	public void removeSelectionChangeListener( final SelectionChangeListener l )
-	{
-		this.selectionChangeListeners.remove( l );
+		selectionChangeListeners.list.forEach( l -> l.selectionChanged( isOverlay ) );
 	}
 }
