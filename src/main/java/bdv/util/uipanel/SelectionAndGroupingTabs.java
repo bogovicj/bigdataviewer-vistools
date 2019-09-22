@@ -36,8 +36,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -569,9 +569,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		sourceVisibilityLabel = new JLabel( visibleIcon );
 		sourceVisibilityLabel.setBackground( BACKGROUND_COLOR );
 		sourceVisibilityLabel.setToolTipText( "Show source in fused mode." );
-		sourceVisibilityLabel.addMouseListener( new MouseListener()
+		sourceVisibilityLabel.addMouseListener( new MouseAdapter()
 		{
-
 			@Override
 			public void mouseReleased( final MouseEvent e )
 			{
@@ -591,30 +590,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 					viewerPanel.requestRepaint();
 					sourcesComboBox.repaint();
 				}
-			}
-
-			@Override
-			public void mousePressed( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseExited( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseEntered( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseClicked( final MouseEvent e )
-			{
-				// nothing
 			}
 		} );
 
@@ -759,9 +734,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		p.setBackground( BACKGROUND_COLOR );
 		p.setForeground( FOREGROUND_COLOR );
 		p.setBorder( null );
-		p.addMouseListener( new MouseListener()
+		p.addMouseListener( new MouseAdapter()
 		{
-
 			@Override
 			public void mouseReleased( final MouseEvent e )
 			{
@@ -788,30 +762,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 					repaintComponents();
 				}
-			}
-
-			@Override
-			public void mousePressed( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseExited( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseEntered( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseClicked( final MouseEvent e )
-			{
-				// nothing
 			}
 		} );
 		return p;
@@ -998,9 +948,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		groupVisibilityLabel.setBackground( BACKGROUND_COLOR );
 		groupVisibilityLabel.setBorder( null );
 		groupVisibilityLabel.setToolTipText( "Show group in fused-group mode." );
-		groupVisibilityLabel.addMouseListener( new MouseListener()
+		groupVisibilityLabel.addMouseListener( new MouseAdapter()
 		{
-
 			@Override
 			public void mouseReleased( final MouseEvent e )
 			{
@@ -1022,30 +971,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 					visGro.setGroupActive( getGroupIndex( selected, viewerPanel ), groupActiveState );
 				}
 			}
-
-			@Override
-			public void mousePressed( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseExited( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseEntered( final MouseEvent e )
-			{
-				// nothing
-			}
-
-			@Override
-			public void mouseClicked( final MouseEvent e )
-			{
-				// nothing
-			}
 		} );
 
 		p.add( groupVisibilityLabel );
@@ -1058,7 +983,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		singleGroupModeCheckbox.setToolTipText( "Display only the currently selected group." );
 		singleGroupModeCheckbox.addActionListener( new ActionListener()
 		{
-
 			@Override
 			public void actionPerformed( final ActionEvent e )
 			{
