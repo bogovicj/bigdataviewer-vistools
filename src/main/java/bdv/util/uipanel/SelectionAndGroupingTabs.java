@@ -28,8 +28,6 @@
  */
 package bdv.util.uipanel;
 
-import bdv.util.BdvHandle;
-import bdv.util.BdvSource;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -70,30 +68,30 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 
+import net.imglib2.type.numeric.ARGBType;
+import net.miginfocom.swing.MigLayout;
+
 import bdv.tools.brightness.ConverterSetup;
 import bdv.tools.brightness.SetupAssignments;
 import bdv.tools.transformation.ManualTransformActiveListener;
 import bdv.tools.transformation.ManualTransformationEditor;
-import bdv.viewer.*;
+import bdv.util.BdvHandle;
+import bdv.viewer.DisplayMode;
+import bdv.viewer.Source;
+import bdv.viewer.ViewerPanel;
+import bdv.viewer.VisibilityAndGrouping;
 import bdv.viewer.VisibilityAndGrouping.Event;
 import bdv.viewer.VisibilityAndGrouping.UpdateListener;
 import bdv.viewer.state.SourceGroup;
 import bdv.viewer.state.SourceState;
-import net.imglib2.type.numeric.ARGBType;
-import net.miginfocom.swing.MigLayout;
 
 /**
  * The tabbed pane with all BDV-UI components.
  *
  * @author Tim-Oliver Buchholz, CSBD/MPI-CBG Dresden
- *
  */
 public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.SourceChangeListener
 {
-
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -129,7 +127,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Source to display name map.
 	 */
-	private Map<Source< ? >, String> sourceNames = new HashMap<>();
+	private final Map< Source< ? >, String > sourceNames = new HashMap<>();
 
 	/**
 	 * Map holding the group names mapped to the {@link GroupProperties}.
@@ -230,28 +228,26 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Bdv visiblity and grouping.
 	 */
-	private VisibilityAndGrouping visGro;
+	private final VisibilityAndGrouping visGro;
 
 	/**
 	 * Bdv viewer panel.
 	 */
-	private ViewerPanel viewerPanel;
+	private final ViewerPanel viewerPanel;
 
 	/**
 	 * Bdv setup assignments.
 	 */
-	private SetupAssignments setupAssignments;
+	private final SetupAssignments setupAssignments;
 
 	/**
 	 * Subscribers to selection changes.
 	 */
-	private List< SelectionChangeListener > selectionChangeListeners = new ArrayList<>();
-
+	private final List< SelectionChangeListener > selectionChangeListeners = new ArrayList<>();
 
 	/**
 	 * This class holds the selection and grouping tab of the big data viewer
 	 * UI.
-	 *
 	 */
 	public SelectionAndGroupingTabs( final ViewerPanel vp, final VisibilityAndGrouping visGro,
 			final ManualTransformationEditor manualTE, final SetupAssignments sa )
@@ -262,9 +258,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		this.setupAssignments = sa;
 		initialize();
 
-		final SourceGroup all = new SourceGroup("All");
-		this.viewerPanel.addGroup(all);
-		groupLookup.put(all, new GroupProperties( "All", true ));
+		final SourceGroup all = new SourceGroup( "All" );
+		this.viewerPanel.addGroup( all );
+		groupLookup.put( all, new GroupProperties( "All", true ) );
 		while ( visGro.getSourceGroups().size() > 1 )
 		{
 			final SourceGroup g = visGro.getSourceGroups().get( 0 );
@@ -290,14 +286,13 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		notVisibleIconSmall = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "notVisible_small.png" ),
 				"Not Visible" );
 
-		groupLookup.put( viewerPanel.getState().getSourceGroups().get(0), new GroupProperties( "All", true ) );
+		groupLookup.put( viewerPanel.getState().getSourceGroups().get( 0 ), new GroupProperties( "All", true ) );
 	}
 
 	/**
 	 * Add tabs source and group to tabbed pane.
 	 *
 	 * Also notify the bdv handle of tab switches.
-	 *
 	 */
 	private void setupTabbedPane()
 	{
@@ -311,19 +306,21 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 		this.addTab( "Group Control", createGroupControl() );
 
-		this.addChangeListener(new ChangeListener() {
+		this.addChangeListener( new ChangeListener()
+		{
 			@Override
-			public void stateChanged(ChangeEvent e) {
+			public void stateChanged( final ChangeEvent e )
+			{
 				if ( getSelectedIndex() == 1 )
 				{
 					if ( singleSourceMode )
 					{
-						if (viewerPanel.getState().getDisplayMode() != DisplayMode.GROUP)
+						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.GROUP )
 							viewerPanel.setDisplayMode( DisplayMode.GROUP );
 					}
 					else
 					{
-						if (viewerPanel.getState().getDisplayMode() != DisplayMode.FUSEDGROUP)
+						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.FUSEDGROUP )
 							viewerPanel.setDisplayMode( DisplayMode.FUSEDGROUP );
 					}
 					groupMode = true;
@@ -333,18 +330,18 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 					sourcesComboBox.setSelectedIndex( visGro.getCurrentSource() );
 					if ( singleSourceMode )
 					{
-						if (viewerPanel.getState().getDisplayMode() != DisplayMode.SINGLE)
+						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.SINGLE )
 							viewerPanel.setDisplayMode( DisplayMode.SINGLE );
 					}
 					else
 					{
-						if (viewerPanel.getState().getDisplayMode() != DisplayMode.FUSED)
+						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.FUSED )
 							viewerPanel.setDisplayMode( DisplayMode.FUSED );
 					}
 					groupMode = false;
 				}
 			}
-		});
+		} );
 	}
 
 	/**
@@ -371,7 +368,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void visibilityChanged( Event e )
+			public void visibilityChanged( final Event e )
 			{
 				SwingUtilities.invokeLater( () -> {
 					if ( e.id == VisibilityAndGrouping.Event.CURRENT_SOURCE_CHANGED )
@@ -437,8 +434,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 *
 	 * Put it into the corresponding group, set visibility and add it to the
 	 * source selection.
-	 *
 	 */
+	@Override
 	public synchronized void sourceAdded( final Source< ? > p )
 	{
 		final String name = uniqueName( p.getName() );
@@ -473,6 +470,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Remove source.
 	 */
+	@Override
 	public synchronized void sourceRemoved( final Source< ? > source )
 	{
 		intensitySlider.removeSource( source );
@@ -498,7 +496,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			else
 			{
 				groupVisibilityLabel.setEnabled( true );
-				if ( groupLookup.get( getGroup((String) groupesComboBox.getSelectedItem()) ).isVisible() )
+				if ( groupLookup.get( getGroup( ( String ) groupesComboBox.getSelectedItem() ) ).isVisible() )
 				{
 					groupVisibilityLabel.setIcon( visibleIcon );
 				}
@@ -508,7 +506,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				}
 				sourceVisibilityLabel.setEnabled( true );
 
-				boolean visible = visGro.isSourceActive( getSourceIndex( getBdvSource( ( String ) sourcesComboBox.getSelectedItem() ), viewerPanel ) );
+				final boolean visible = visGro.isSourceActive( getSourceIndex( getBdvSource( ( String ) sourcesComboBox.getSelectedItem() ), viewerPanel ) );
 				if ( visible )
 				{
 					sourceVisibilityLabel.setIcon( visibleIcon );
@@ -535,12 +533,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		singleGroupModeCheckbox.setEnabled( active );
 		selectedSources.setEnabled( active );
 		remainingSources.setEnabled( active );
-		for ( Component c : selectedSources.getComponents() )
+		for ( final Component c : selectedSources.getComponents() )
 		{
 			if ( c instanceof JLabel )
 				c.setEnabled( active );
 		}
-		for ( Component c : remainingSources.getComponents() )
+		for ( final Component c : remainingSources.getComponents() )
 		{
 			if ( c instanceof JLabel )
 				c.setEnabled( active );
@@ -575,7 +573,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void mouseReleased( MouseEvent e )
+			public void mouseReleased( final MouseEvent e )
 			{
 				if ( !singleSourceMode )
 				{
@@ -596,25 +594,25 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			}
 
 			@Override
-			public void mousePressed( MouseEvent e )
+			public void mousePressed( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseExited( MouseEvent e )
+			public void mouseExited( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseEntered( MouseEvent e )
+			public void mouseEntered( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseClicked( MouseEvent e )
+			public void mouseClicked( final MouseEvent e )
 			{
 				// nothing
 			}
@@ -628,10 +626,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void actionPerformed( ActionEvent ev )
+			public void actionPerformed( final ActionEvent ev )
 			{
 				Color newColor = null;
-				ConverterSetup setup = setupAssignments.getConverterSetups().get( sourcesComboBox.getSelectedIndex() );
+				final ConverterSetup setup = setupAssignments.getConverterSetups().get( sourcesComboBox.getSelectedIndex() );
 				if ( ev.getSource() == colorButton )
 				{
 					newColor = JColorChooser.showDialog( null, "Select Source Color", getColor( setup ) );
@@ -702,7 +700,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void actionPerformed( ActionEvent e )
+			public void actionPerformed( final ActionEvent e )
 			{
 				singleSourceMode = singleSourceModeCheckbox.isSelected();
 				if ( !singleSourceMode && !groupMode )
@@ -732,15 +730,17 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		return p;
 	}
 
-	private void updateGroupSourceComponent() {
+	private void updateGroupSourceComponent()
+	{
 		selectedSources.removeAll();
 		remainingSources.removeAll();
 
-		viewerPanel.getState().getSources().forEach(new Consumer<SourceState<?>>() {
+		viewerPanel.getState().getSources().forEach( new Consumer< SourceState< ? > >()
+		{
 			@Override
-			public void accept( SourceState< ? > sourceState )
+			public void accept( final SourceState< ? > sourceState )
 			{
-				if ( getCurrentGroup(viewerPanel).getSourceIds().contains( getSourceIndex( sourceState.getSpimSource(), viewerPanel ) ) )
+				if ( getCurrentGroup( viewerPanel ).getSourceIds().contains( getSourceIndex( sourceState.getSpimSource(), viewerPanel ) ) )
 				{
 					selectedSources.add( createEntry( sourceState ), "growx, wrap" );
 				}
@@ -750,12 +750,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				}
 				repaintComponents();
 			}
-		});
+		} );
 	}
 
-	private Component createEntry(SourceState< ? > t )
+	private Component createEntry( final SourceState< ? > t )
 	{
-		final JLabel p = new JLabel( sourceNames.get(t.getSpimSource()) );
+		final JLabel p = new JLabel( sourceNames.get( t.getSpimSource() ) );
 		p.setBackground( BACKGROUND_COLOR );
 		p.setForeground( FOREGROUND_COLOR );
 		p.setBorder( null );
@@ -763,12 +763,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void mouseReleased( MouseEvent e )
+			public void mouseReleased( final MouseEvent e )
 			{
 				if ( !manualTransformationActive )
 				{
-					final SourceGroup group = getGroup( (String) groupesComboBox.getSelectedItem() );
-					GroupProperties groupProps = groupLookup.get(group);
+					final SourceGroup group = getGroup( ( String ) groupesComboBox.getSelectedItem() );
+					final GroupProperties groupProps = groupLookup.get( group );
 					if ( groupProps.getSources().contains( t.getSpimSource() ) )
 					{
 						groupProps.removeSource( t.getSpimSource() );
@@ -791,25 +791,25 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			}
 
 			@Override
-			public void mousePressed( MouseEvent e )
+			public void mousePressed( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseExited( MouseEvent e )
+			public void mouseExited( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseEntered( MouseEvent e )
+			public void mouseEntered( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseClicked( MouseEvent e )
+			public void mouseClicked( final MouseEvent e )
 			{
 				// nothing
 			}
@@ -845,12 +845,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void actionPerformed( ActionEvent e )
+			public void actionPerformed( final ActionEvent e )
 			{
 				if ( e.getSource() == removeGroup )
 				{
-					int selectedIndex = groupesComboBox.getSelectedIndex();
-					String selected = ( String ) groupesComboBox.getSelectedItem();
+					final int selectedIndex = groupesComboBox.getSelectedIndex();
+					final String selected = ( String ) groupesComboBox.getSelectedItem();
 					SourceGroup toRemove = null;
 					for ( int i = 0; i < visGro.getSourceGroups().size(); i++ )
 					{
@@ -886,18 +886,15 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		selection.setPreferredSize( new Dimension( selection.getPreferredSize().width, 150 ) );
 		selection.setUI( new BasicSplitPaneUI()
 		{
+			@Override
 			public BasicSplitPaneDivider createDefaultDivider()
 			{
 				return new BasicSplitPaneDivider( this )
 				{
-
-					/**
-					 *
-					 */
 					private static final long serialVersionUID = 1L;
 
 					@Override
-					public void paint( Graphics g )
+					public void paint( final Graphics g )
 					{
 						g.setColor( BACKGROUND_COLOR );
 						g.fillRect( 0, 0, getSize().width, getSize().height );
@@ -929,7 +926,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			@Override
 			public void itemStateChanged( final ItemEvent e )
 			{
-				if ( e.getStateChange() == ItemEvent.SELECTED  )
+				if ( e.getStateChange() == ItemEvent.SELECTED )
 				{
 					final Object selection = e.getItem();
 					if ( selection != null && selection instanceof String )
@@ -950,9 +947,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 								{
 
 									groupesComboBox.addItem( newGroupName );
-									int idx = viewerPanel.getState().getSourceGroups().size();
-									SourceGroup group = new SourceGroup(newGroupName);
-									viewerPanel.addGroup(group);
+									final int idx = viewerPanel.getState().getSourceGroups().size();
+									final SourceGroup group = new SourceGroup( newGroupName );
+									viewerPanel.addGroup( group );
 									groupLookup.put( group, new GroupProperties( newGroupName, true ) );
 									visGro.setCurrentGroup( idx );
 									groupesComboBox.setSelectedItem( newGroupName );
@@ -971,7 +968,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 							if ( !singleSourceMode )
 							{
 								groupVisibilityLabel.setEnabled( true );
-								if ( groupLookup.get( getGroup((String) groupesComboBox.getSelectedItem()) ).isVisible() )
+								if ( groupLookup.get( getGroup( ( String ) groupesComboBox.getSelectedItem() ) ).isVisible() )
 								{
 									groupVisibilityLabel.setIcon( visibleIcon );
 								}
@@ -1005,12 +1002,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void mouseReleased( MouseEvent e )
+			public void mouseReleased( final MouseEvent e )
 			{
 				if ( !singleSourceMode )
 				{
-					String selected = ( String ) groupesComboBox.getSelectedItem();
-					boolean groupActiveState = groupLookup.get( getGroup(selected) ).isVisible();
+					final String selected = ( String ) groupesComboBox.getSelectedItem();
+					boolean groupActiveState = groupLookup.get( getGroup( selected ) ).isVisible();
 					if ( groupActiveState )
 					{
 						groupActiveState = !groupActiveState;
@@ -1021,31 +1018,31 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 						groupActiveState = !groupActiveState;
 						groupVisibilityLabel.setIcon( visibleIcon );
 					}
-					groupLookup.get( getGroup(selected )).setVisible( groupActiveState );
+					groupLookup.get( getGroup( selected ) ).setVisible( groupActiveState );
 					visGro.setGroupActive( getGroupIndex( selected, viewerPanel ), groupActiveState );
 				}
 			}
 
 			@Override
-			public void mousePressed( MouseEvent e )
+			public void mousePressed( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseExited( MouseEvent e )
+			public void mouseExited( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseEntered( MouseEvent e )
+			public void mouseEntered( final MouseEvent e )
 			{
 				// nothing
 			}
 
 			@Override
-			public void mouseClicked( MouseEvent e )
+			public void mouseClicked( final MouseEvent e )
 			{
 				// nothing
 			}
@@ -1063,7 +1060,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 
 			@Override
-			public void actionPerformed( ActionEvent e )
+			public void actionPerformed( final ActionEvent e )
 			{
 				singleSourceModeCheckbox.setSelected( singleGroupModeCheckbox.isSelected() );
 				singleSourceMode = singleSourceModeCheckbox.isSelected();
@@ -1116,9 +1113,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		}
 
 		@Override
-		protected JButton createDecreaseButton( int orientation )
+		protected JButton createDecreaseButton( final int orientation )
 		{
-			BasicArrowButton button = new BasicArrowButton( orientation, BACKGROUND_COLOR, BACKGROUND_COLOR,
+			final BasicArrowButton button = new BasicArrowButton( orientation, BACKGROUND_COLOR, BACKGROUND_COLOR,
 					Color.lightGray, BACKGROUND_COLOR );
 			button.setBorder( new LineBorder( BACKGROUND_COLOR ) );
 			button.setBackground( BACKGROUND_COLOR );
@@ -1126,9 +1123,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		}
 
 		@Override
-		protected JButton createIncreaseButton( int orientation )
+		protected JButton createIncreaseButton( final int orientation )
 		{
-			BasicArrowButton button = new BasicArrowButton( orientation, BACKGROUND_COLOR, BACKGROUND_COLOR,
+			final BasicArrowButton button = new BasicArrowButton( orientation, BACKGROUND_COLOR, BACKGROUND_COLOR,
 					Color.lightGray, BACKGROUND_COLOR );
 			button.setBorder( new LineBorder( BACKGROUND_COLOR ) );
 			button.setBackground( BACKGROUND_COLOR );
@@ -1139,15 +1136,11 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	// A combobox renderer displaying the visibility state of the sources.
 	class SourceComboBoxRenderer extends JLabel implements ListCellRenderer< String >
 	{
-
-		/**
-		 *
-		 */
 		private static final long serialVersionUID = 1L;
 
 		@Override
-		public Component getListCellRendererComponent( JList< ? extends String > list, String value, int index,
-				boolean isSelected, boolean cellHasFocus )
+		public Component getListCellRendererComponent( final JList< ? extends String > list, final String value, final int index,
+				final boolean isSelected, final boolean cellHasFocus )
 		{
 
 			if ( value != null )
@@ -1155,7 +1148,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				this.setText( value );
 				this.setToolTipText( value );
 				this.setIcon( visibleIconSmall );
-				boolean visible = visGro.isSourceActive( getSourceIndex(getBdvSource(value), viewerPanel) );
+				final boolean visible = visGro.isSourceActive( getSourceIndex( getBdvSource( value ), viewerPanel ) );
 				if ( !singleSourceMode && !visible )
 				{
 					this.setIcon( notVisibleIconSmall );
@@ -1180,22 +1173,19 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 	}
 
-	private Source< ? > getBdvSource(final String value) {
-		return sourceLookup.get(value);
+	private Source< ? > getBdvSource( final String value )
+	{
+		return sourceLookup.get( value );
 	}
 
 	// A combobox renderer displaying the visibility state of the groups.
 	class GroupComboBoxRenderer extends JLabel implements ListCellRenderer< String >
 	{
-
-		/**
-		 *
-		 */
 		private static final long serialVersionUID = 1L;
 
 		@Override
-		public Component getListCellRendererComponent( JList< ? extends String > list, String value, int index,
-				boolean isSelected, boolean cellHasFocus )
+		public Component getListCellRendererComponent( final JList< ? extends String > list, final String value, final int index,
+				final boolean isSelected, final boolean cellHasFocus )
 		{
 
 			if ( value != null )
@@ -1203,7 +1193,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				if ( !value.equals( NEW_GROUP ) )
 				{
 					this.setIcon( visibleIconSmall );
-					if ( !singleSourceMode && !groupLookup.get( getGroup(value) ).isVisible() )
+					if ( !singleSourceMode && !groupLookup.get( getGroup( value ) ).isVisible() )
 					{
 						this.setIcon( notVisibleIconSmall );
 					}
@@ -1245,47 +1235,55 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		setup.setColor( new ARGBType( color.getRGB() | 0xff000000 ) );
 	}
 
-	protected static Source< ? > getSource(final int i, final ViewerPanel viewerPanel) {
+	protected static Source< ? > getSource( final int i, final ViewerPanel viewerPanel )
+	{
 		return viewerPanel.getState().getSources().get( i ).getSpimSource();
 	}
 
-	protected static Source< ? > getCurrentSource(final ViewerPanel viewerPanel) {
+	protected static Source< ? > getCurrentSource( final ViewerPanel viewerPanel )
+	{
 		return getSource( viewerPanel.getState().getCurrentSource(), viewerPanel );
 	}
 
-	protected static int getCurrentSourceIndex(final ViewerPanel viewerPanel) {
+	protected static int getCurrentSourceIndex( final ViewerPanel viewerPanel )
+	{
 		return viewerPanel.getState().getCurrentSource();
 	}
 
-	protected static int getCurrentGroupIndex(final ViewerPanel viewerPanel) {
-		return  viewerPanel.getState().getCurrentGroup();
+	protected static int getCurrentGroupIndex( final ViewerPanel viewerPanel )
+	{
+		return viewerPanel.getState().getCurrentGroup();
 	}
 
-	protected Source< ? > getSource(final String name) {
-		return viewerPanel.getState().getSources().get( getSourceIndex( sourceLookup.get( name ), viewerPanel)).getSpimSource();
+	protected Source< ? > getSource( final String name )
+	{
+		return viewerPanel.getState().getSources().get( getSourceIndex( sourceLookup.get( name ), viewerPanel ) ).getSpimSource();
 	}
 
-	protected static int getSourceIndex(final Source< ? > src, final ViewerPanel viewerPanel) {
-		List<SourceState<?>> sources = viewerPanel.getState().getSources();
-		for (SourceState< ? > s : sources) {
-			if (s.getSpimSource().equals(src)) {
-				return sources.indexOf(s);
-			}
+	protected static int getSourceIndex( final Source< ? > src, final ViewerPanel viewerPanel )
+	{
+		final List< SourceState< ? > > sources = viewerPanel.getState().getSources();
+		for ( final SourceState< ? > s : sources )
+		{
+			if ( s.getSpimSource().equals( src ) )
+			{ return sources.indexOf( s ); }
 		}
 		return -1;
 	}
 
-	protected SourceGroup getGroup(final String name) {
-		for (SourceGroup sg : groupLookup.keySet() ) {
-			if (groupLookup.get(sg).getGroupName().equals(name)) {
-				return sg;
-			}
+	protected SourceGroup getGroup( final String name )
+	{
+		for ( final SourceGroup sg : groupLookup.keySet() )
+		{
+			if ( groupLookup.get( sg ).getGroupName().equals( name ) )
+			{ return sg; }
 		}
 		return null;
 	}
 
-	protected static SourceGroup getCurrentGroup(final ViewerPanel viewerPanel) {
-		return viewerPanel.getState().getSourceGroups().get(viewerPanel.getState().getCurrentGroup());
+	protected static SourceGroup getCurrentGroup( final ViewerPanel viewerPanel )
+	{
+		return viewerPanel.getState().getSourceGroups().get( viewerPanel.getState().getCurrentGroup() );
 	}
 
 	protected static int getGroupIndex( final String groupName, final ViewerPanel viewerPanel )
