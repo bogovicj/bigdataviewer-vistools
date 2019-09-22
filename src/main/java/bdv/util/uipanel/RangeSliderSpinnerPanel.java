@@ -647,7 +647,16 @@ public class RangeSliderSpinnerPanel extends JPanel
 			upperBound.setValue( upperBoundLookup.get( src ) );
 			if ( isLabeling )
 			{
+				
+				
+				
+				
+				// TODO: labelingMinMax has Integer indices
 				final Pair< Double, Double > p = labelingMinMax.get( src );
+				
+				
+				
+				
 				lowerValue.setValue( p.getA() );
 				upperValue.setValue( p.getB() );
 			}
@@ -689,6 +698,13 @@ public class RangeSliderSpinnerPanel extends JPanel
 
 	public synchronized void removeSource( final Source< ? > source )
 	{
+		
+		
+		
+		
+		
+		
+		// TODO: Fix this
 		final int sourceID = currentSourceIdx;
 		lowerBoundLookup.remove( sourceID );
 		upperBoundLookup.remove( sourceID );
@@ -696,6 +712,13 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 			labelingMinMax.remove( sourceID );
 		}
+		
+		
+		
+		
+		
+		
+		
 		final HashMap< Integer, Pair< Double, Double > > tmp = new HashMap<>();
 		final Iterator< Integer > it = labelingMinMax.keySet().iterator();
 		while ( it.hasNext() )
