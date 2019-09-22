@@ -1,5 +1,16 @@
 package bdv.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import net.imglib2.realtransform.AffineTransform3D;
+import net.imglib2.ui.OverlayRenderer;
+import net.imglib2.ui.TransformListener;
+
+import org.scijava.listeners.Listeners;
+import org.scijava.ui.behaviour.util.InputActionBindings;
+import org.scijava.ui.behaviour.util.TriggerBehaviourBindings;
+
 import bdv.cache.CacheControl.CacheControls;
 import bdv.tools.InitializeViewerState;
 import bdv.tools.brightness.ConverterSetup;
@@ -11,14 +22,6 @@ import bdv.viewer.SourceAndConverter;
 import bdv.viewer.TimePointListener;
 import bdv.viewer.ViewerPanel;
 import bdv.viewer.VisibilityAndGrouping.UpdateListener;
-import java.util.ArrayList;
-import java.util.List;
-import net.imglib2.realtransform.AffineTransform3D;
-import net.imglib2.ui.OverlayRenderer;
-import net.imglib2.ui.TransformListener;
-import org.scijava.listeners.Listeners;
-import org.scijava.ui.behaviour.util.InputActionBindings;
-import org.scijava.ui.behaviour.util.TriggerBehaviourBindings;
 
 /**
  * Represents a BigDataViewer frame or panel and can be used to get to the bdv
@@ -199,9 +202,9 @@ public abstract class BdvHandle implements Bdv
 
 	public interface SourceChangeListener
 	{
-		void sourceAdded( final Source source );
+		void sourceAdded( final Source< ? > source );
 
-		void sourceRemoved( final Source source );
+		void sourceRemoved( final Source< ? > source );
 	}
 
 	private final Listeners.List< SourceChangeListener > sourceChangeListeners = new Listeners.SynchronizedList<>();

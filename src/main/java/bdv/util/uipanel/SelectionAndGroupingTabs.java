@@ -124,12 +124,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Map holding the source names mapped to the {@link Source}.
 	 */
-	private final Map< String, Source > sourceLookup = new HashMap<>();
+	private final Map< String, Source< ? > > sourceLookup = new HashMap<>();
 
 	/**
 	 * Source to display name map.
 	 */
-	private Map<Source, String> sourceNames = new HashMap<Source, String>();
+	private Map<Source< ? >, String> sourceNames = new HashMap<>();
 
 	/**
 	 * Map holding the group names mapped to the {@link GroupProperties}.
@@ -439,7 +439,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 * source selection.
 	 *
 	 */
-	public synchronized void sourceAdded( final Source p )
+	public synchronized void sourceAdded( final Source< ? > p )
 	{
 		final String name = uniqueName( p.getName() );
 
@@ -473,7 +473,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Remove source.
 	 */
-	public synchronized void sourceRemoved( final Source source )
+	public synchronized void sourceRemoved( final Source< ? > source )
 	{
 		intensitySlider.removeSource( source );
 		for ( final GroupProperties group : groupLookup.values() )
@@ -654,7 +654,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				if ( e.getStateChange() == ItemEvent.SELECTED )
 				{
 					sourcesComboBox.setToolTipText( ( String ) sourcesComboBox.getSelectedItem() );
-					final Source p = sourceLookup.get( sourcesComboBox.getSelectedItem() );
+					final Source< ? > p = sourceLookup.get( sourcesComboBox.getSelectedItem() );
 					notifySelectionChangeListeners( false );
 					if ( p != null )
 					{
@@ -753,7 +753,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		});
 	}
 
-	private Component createEntry(SourceState t )
+	private Component createEntry(SourceState< ? > t )
 	{
 		final JLabel p = new JLabel( sourceNames.get(t.getSpimSource()) );
 		p.setBackground( BACKGROUND_COLOR );
@@ -1180,7 +1180,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 	}
 
-	private Source getBdvSource(final String value) {
+	private Source< ? > getBdvSource(final String value) {
 		return sourceLookup.get(value);
 	}
 
@@ -1245,11 +1245,11 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		setup.setColor( new ARGBType( color.getRGB() | 0xff000000 ) );
 	}
 
-	protected static Source getSource(final int i, final ViewerPanel viewerPanel) {
+	protected static Source< ? > getSource(final int i, final ViewerPanel viewerPanel) {
 		return viewerPanel.getState().getSources().get( i ).getSpimSource();
 	}
 
-	protected static Source getCurrentSource(final ViewerPanel viewerPanel) {
+	protected static Source< ? > getCurrentSource(final ViewerPanel viewerPanel) {
 		return getSource( viewerPanel.getState().getCurrentSource(), viewerPanel );
 	}
 
@@ -1261,13 +1261,13 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		return  viewerPanel.getState().getCurrentGroup();
 	}
 
-	protected Source getSource(final String name) {
+	protected Source< ? > getSource(final String name) {
 		return viewerPanel.getState().getSources().get( getSourceIndex( sourceLookup.get( name ), viewerPanel)).getSpimSource();
 	}
 
-	protected static int getSourceIndex(final Source src, final ViewerPanel viewerPanel) {
+	protected static int getSourceIndex(final Source< ? > src, final ViewerPanel viewerPanel) {
 		List<SourceState<?>> sources = viewerPanel.getState().getSources();
-		for (SourceState s : sources) {
+		for (SourceState< ? > s : sources) {
 			if (s.getSpimSource().equals(src)) {
 				return sources.indexOf(s);
 			}

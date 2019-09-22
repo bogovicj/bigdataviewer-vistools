@@ -93,7 +93,7 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 
 	private VisibilityAndGrouping visGro;
 
-	private final Map<Source, AffineTransform3D> transformationLookup = new HashMap<Source, AffineTransform3D>();
+	private final Map<Source< ? >, AffineTransform3D> transformationLookup = new HashMap<>();
 
 	private boolean isOverlay = false;
 
@@ -507,14 +507,14 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 	}
 
 	@Override
-	public void sourceAdded( final Source source )
+	public void sourceAdded( final Source< ? > source )
 	{
 		transformationLookup.put( source,
 				getInitialTransformation( viewerPanel.getVisibilityAndGrouping().getCurrentSource() ) );
 	}
 
 	@Override
-	public void sourceRemoved( final Source source )
+	public void sourceRemoved( final Source< ? > source )
 	{
 		transformationLookup.remove( source );
 	}
