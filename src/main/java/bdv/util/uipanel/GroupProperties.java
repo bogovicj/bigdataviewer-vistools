@@ -51,13 +51,13 @@ public class GroupProperties {
 	 * Information about a specific group.
 	 *
 	 * @param groupName name of the group
-	 * @param sourceName name of the source to add
+	 * @param source name of the source to add
 	 * @param visibility of this group
 	 */
-	public GroupProperties(final String groupName, final Source sourceName, final boolean visibility) {
+	public GroupProperties(final String groupName, final Source source, final boolean visibility) {
 		this.groupName = groupName;
-		this.sources = new HashSet<Source>();
-		this.sources.add(sourceName);
+		this.sources = new HashSet<>();
+		this.sources.add(source);
 		this.visibility = visibility;
 	}
 
