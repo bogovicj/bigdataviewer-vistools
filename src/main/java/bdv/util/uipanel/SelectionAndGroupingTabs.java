@@ -32,8 +32,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -60,8 +61,6 @@ import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -82,7 +81,6 @@ import bdv.viewer.Source;
 import bdv.viewer.ViewerPanel;
 import bdv.viewer.VisibilityAndGrouping;
 import bdv.viewer.VisibilityAndGrouping.Event;
-import bdv.viewer.VisibilityAndGrouping.UpdateListener;
 import bdv.viewer.state.SourceGroup;
 import bdv.viewer.state.SourceState;
 import bdv.viewer.state.ViewerState;
@@ -315,7 +313,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Only display selected source.
 	 */
-	private boolean singleSourceMode;
+	private boolean singleSourceMode; // TODO: still needed?
 
 	/**
 	 * Single source mode checkbox.
@@ -545,7 +543,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				{
 					singleGroupModeCheckbox.setSelected( true );
 					singleSourceModeCheckbox.setSelected( true );
-					sourceVisibilityLabel.setEnabled( false );
 					singleSourceMode = true;
 
 					setEnableVisibilityIcons( false );
@@ -600,32 +597,11 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 	private void setEnableVisibilityIcons( final boolean active )
 	{
-		if ( !groupLookup.isEmpty() )
-		{
-			if ( !active )
-			{
-				groupVisibilityLabel.setEnabled( false );
-				groupVisibilityLabel.setIcon( visibleIcon );
-				sourceVisibilityLabel.setEnabled( false );
-				sourceVisibilityLabel.setIcon( visibleIcon );
-			}
-			else
-			{
-				groupVisibilityLabel.setEnabled( true );
-				if ( groupLookup.get( getGroup( ( String ) groupsComboBox.getSelectedItem() ) ).isVisible() )
-				{
-					groupVisibilityLabel.setIcon( visibleIcon );
-				}
-				else
-				{
-					groupVisibilityLabel.setIcon( notVisibleIcon );
-				}
-				sourceVisibilityLabel.setEnabled( true );
+		final boolean groupVisible = groupLookup.get( getGroup( ( String ) groupsComboBox.getSelectedItem() ) ).isVisible();
+		groupVisibilityLabel.setIcon( groupVisible ? visibleIcon : notVisibleIcon );
 
-				final boolean visible = sourceIndexHelper.isSourceActive( ( Source< ? > ) sourcesComboBox.getSelectedItem() );
-				sourceVisibilityLabel.setIcon( visible ? visibleIcon : notVisibleIcon );
-			}
-		}
+		final boolean visible = sourceIndexHelper.isSourceActive( ( Source< ? > ) sourcesComboBox.getSelectedItem() );
+		sourceVisibilityLabel.setIcon( visible ? visibleIcon : notVisibleIcon );
 	}
 
 	/**
@@ -696,14 +672,14 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		// color choser component
 		final JButton colorButton = new JButton();
 		colorButton.setPreferredSize( new Dimension( 15, 15 ) );
-		colorButton.setBackground( BACKGROUND_COLOR );
+		colorButton.setIcon( new ColorIcon( BACKGROUND_COLOR ) );
 		colorButton.addActionListener( e -> {
 			Color newColor = null;
 			final ConverterSetup setup = sourceToConverterSetup.get( sourcesComboBox.getSelectedItem() );
 			newColor = JColorChooser.showDialog( null, "Select Source Color", getColor( setup ) );
 			if ( newColor != null )
 			{
-				colorButton.setBackground( newColor );
+				colorButton.setIcon( new ColorIcon( newColor ) );
 				setColor( setup, newColor );
 			}
 		} );
@@ -721,8 +697,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 					intensitySlider.setSource( source );
 					informationPanel.setType( source.getType().getClass().getSimpleName() );
 
-					colorButton.setVisible( source.getType().getClass() != ARGBType.class );
-					colorButton.setBackground( getColor( sourceToConverterSetup.get( source ) ) );
+					final boolean argb = source.getType() instanceof ARGBType;
+					final Color color = argb ? null : getColor( sourceToConverterSetup.get( source ) );
+					colorButton.setIcon( new ColorIcon( color ) );
+					colorButton.setEnabled( !argb );
 
 					final boolean active = sourceIndexHelper.isSourceActive( source );
 					sourceVisibilityLabel.setIcon( active ? visibleIcon : notVisibleIcon );
@@ -742,30 +720,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		singleSourceModeCheckbox = new JCheckBox( "Single Source Mode" );
 		singleSourceModeCheckbox.setBackground( BACKGROUND_COLOR );
 		singleSourceModeCheckbox.setToolTipText( "Display only the selected source." );
-		singleSourceModeCheckbox.addActionListener( new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed( final ActionEvent e )
-			{
-				singleSourceMode = singleSourceModeCheckbox.isSelected();
-				if ( !singleSourceMode && !groupMode )
-				{
-					visGro.setDisplayMode( DisplayMode.FUSED );
-				}
-				else if ( !singleSourceMode && groupMode )
-				{
-					visGro.setDisplayMode( DisplayMode.FUSEDGROUP );
-				}
-				else if ( singleSourceMode && !groupMode )
-				{
-					visGro.setDisplayMode( DisplayMode.SINGLE );
-				}
-				else
-				{
-					visGro.setDisplayMode( DisplayMode.GROUP );
-				}
-			}
+		singleSourceModeCheckbox.addActionListener( e -> {
+			singleSourceMode = singleSourceModeCheckbox.isSelected();
+			visGro.setFusedEnabled( !singleSourceMode );
 		} );
 
 		// add range slider for intensity boundaries.
@@ -855,32 +812,23 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		removeGroup = new JButton( "-" );
 		removeGroup.setForeground( FOREGROUND_COLOR );
 		removeGroup.setBackground( BACKGROUND_COLOR );
-		removeGroup.addActionListener( new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed( final ActionEvent e )
+		removeGroup.addActionListener( e -> {
+			final int selectedIndex = groupsComboBox.getSelectedIndex();
+			final String selected = ( String ) groupsComboBox.getSelectedItem();
+			SourceGroup toRemove = null;
+			for ( int i = 0; i < visGro.getSourceGroups().size(); i++ )
 			{
-				if ( e.getSource() == removeGroup )
+				if ( visGro.getSourceGroups().get( i ).getName().equals( selected ) )
 				{
-					final int selectedIndex = groupsComboBox.getSelectedIndex();
-					final String selected = ( String ) groupsComboBox.getSelectedItem();
-					SourceGroup toRemove = null;
-					for ( int i = 0; i < visGro.getSourceGroups().size(); i++ )
-					{
-						if ( visGro.getSourceGroups().get( i ).getName().equals( selected ) )
-						{
-							toRemove = visGro.getSourceGroups().get( i );
-						}
-					}
-					groupsComboBox.removeItemAt( selectedIndex );
-					groupsComboBox.setSelectedIndex( 1 );
-					if ( toRemove != null )
-					{
-						viewerPanel.removeGroup( toRemove );
-						groupLookup.remove( selected );
-					}
+					toRemove = visGro.getSourceGroups().get( i );
 				}
+			}
+			groupsComboBox.removeItemAt( selectedIndex );
+			groupsComboBox.setSelectedIndex( 1 );
+			if ( toRemove != null )
+			{
+				viewerPanel.removeGroup( toRemove );
+				groupLookup.remove( selected );
 			}
 		} );
 
@@ -979,23 +927,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 						if ( getSelectedIndex() == 1 )
 						{
 							visGro.setCurrentGroup( getGroupIndex( ( String ) groupsComboBox.getSelectedItem(), viewerPanel ) );
-							if ( !singleSourceMode )
-							{
-								groupVisibilityLabel.setEnabled( true );
-								if ( groupLookup.get( getGroup( ( String ) groupsComboBox.getSelectedItem() ) ).isVisible() )
-								{
-									groupVisibilityLabel.setIcon( visibleIcon );
-								}
-								else
-								{
-									groupVisibilityLabel.setIcon( notVisibleIcon );
-								}
-							}
-							else
-							{
-								groupVisibilityLabel.setIcon( visibleIcon );
-								groupVisibilityLabel.setEnabled( false );
-							}
+							final boolean visible = singleSourceMode || groupLookup.get( getGroup( ( String ) groupsComboBox.getSelectedItem() ) ).isVisible();
+							groupVisibilityLabel.setIcon( visible ? visibleIcon : notVisibleIcon );
 						}
 						updateGroupSourceComponent();
 						removeGroup.setEnabled( groupsComboBox.getSelectedIndex() > 1 );
@@ -1045,30 +978,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		singleGroupModeCheckbox = new JCheckBox( "Single Group Mode" );
 		singleGroupModeCheckbox.setBackground( BACKGROUND_COLOR );
 		singleGroupModeCheckbox.setToolTipText( "Display only the currently selected group." );
-		singleGroupModeCheckbox.addActionListener( new ActionListener()
-		{
-			@Override
-			public void actionPerformed( final ActionEvent e )
-			{
-				singleSourceModeCheckbox.setSelected( singleGroupModeCheckbox.isSelected() );
-				singleSourceMode = singleSourceModeCheckbox.isSelected();
-				if ( !singleSourceMode && !groupMode )
-				{
-					visGro.setDisplayMode( DisplayMode.FUSED );
-				}
-				else if ( !singleSourceMode && groupMode )
-				{
-					visGro.setDisplayMode( DisplayMode.FUSEDGROUP );
-				}
-				else if ( singleSourceMode && !groupMode )
-				{
-					visGro.setDisplayMode( DisplayMode.SINGLE );
-				}
-				else
-				{
-					visGro.setDisplayMode( DisplayMode.GROUP );
-				}
-			}
+		singleGroupModeCheckbox.addActionListener( e -> {
+			singleSourceModeCheckbox.setSelected( singleGroupModeCheckbox.isSelected() );
+			singleSourceMode = singleSourceModeCheckbox.isSelected();
+			visGro.setFusedEnabled( !singleSourceMode );
 		} );
 		p.add( selection, "span, growx, wrap" );
 
@@ -1265,5 +1178,62 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	private void notifySelectionChangeListeners( final boolean isOverlay )
 	{
 		selectionChangeListeners.list.forEach( l -> l.selectionChanged( isOverlay ) );
+	}
+
+
+
+
+
+
+
+
+
+
+	/**
+	 * Adapted from http://stackoverflow.com/a/3072979/230513
+	 */
+	private static class ColorIcon implements Icon
+	{
+		private final int size = 16;
+
+		private final Color color;
+
+		public ColorIcon( final Color color )
+		{
+			this.color = color;
+		}
+
+		@Override
+		public void paintIcon( final Component c, final Graphics g, final int x, final int y )
+		{
+			final Graphics2D g2d = ( Graphics2D ) g;
+			g2d.setRenderingHint( RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON );
+			if ( color == null )
+			{
+				g2d.setColor( new Color( 0xffbcbc ) );
+				g2d.fillArc( x, y, size, size, 0, 120 );
+				g2d.setColor( new Color( 0xbcffbc ) );
+				g2d.fillArc( x, y, size, size, 120, 120 );
+				g2d.setColor( new Color( 0xbcbcff ) );
+				g2d.fillArc( x, y, size, size, 240, 120 );
+			}
+			else
+			{
+				g2d.setColor( color );
+				g2d.fillOval( x, y, size, size );
+			}
+		}
+
+		@Override
+		public int getIconWidth()
+		{
+			return size;
+		}
+
+		@Override
+		public int getIconHeight()
+		{
+			return size;
+		}
 	}
 }
