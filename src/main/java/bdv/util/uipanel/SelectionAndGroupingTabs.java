@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -115,7 +114,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Combobox displaying all current sources.
 	 */
-	private JComboBox< String > sourcesComboBox;
+	private JComboBox< Source< ? > > sourcesComboBox;
 
 	/**
 	 * Combobox displaying all groups with an option to create new groups.
@@ -144,7 +143,67 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			return getSourceForIndex( state, i );
 		}
 
-		// TODO add similar method to SourceState
+		public boolean isSourceActive( final Source< ? > source )
+		{
+			return getSourceState( viewer.getState(), source ).isActive();
+		}
+
+		public int getSourceIndex( final Source< ? > source )
+		{
+			return getIndex( viewer.getState(), source );
+		}
+
+		public void addSourceToGroup( final Source< ? > source, final int groupIndex /*TODO*/ )
+		{
+			final ViewerState state = viewer.getState();
+			final int sourceIndex = getIndex( state, source );
+			visibility.addSourceToGroup( sourceIndex, groupIndex );
+		}
+
+		public void removeSourceFromGroup( final Source< ? > source, final int groupIndex /* TODO */ )
+		{
+			final ViewerState state = viewer.getState();
+			final int sourceIndex = getIndex( state, source );
+			visibility.removeSourceFromGroup( sourceIndex, groupIndex );
+		}
+
+		public void setGroupActive( final SourceGroup group, final boolean active )
+		{
+			final int i = visibility.getSourceGroups().indexOf( group );
+			if ( i >= 0 )
+				visibility.setGroupActive( i, active );
+		}
+
+		public void setCurrentGroup( final SourceGroup group )
+		{
+			final int i = visibility.getSourceGroups().indexOf( group );
+			if ( i >= 0 )
+				visibility.setCurrentGroup( i );
+		}
+
+		// = = = = = = = = = = = = = = = = = =
+
+		private SourceState< ? > getSourceState( final ViewerState state, final Source< ? > source )
+		{
+			final List< SourceState< ? > > ss = state.getSources();
+			for ( final SourceState< ? > s : ss )
+				if ( s.getSpimSource() == source )
+					return s;
+			return null;
+		}
+
+		private int getIndex( final ViewerState state, final Source< ? > source )
+		{
+			final List< SourceState< ? > > ss = state.getSources();
+			for ( int i = 0; i < ss.size(); ++i )
+			{
+				final SourceState< ? > s = ss.get( i );
+				if ( s.getSpimSource() == source )
+					return i;
+			}
+			return -1;
+		}
+
 		private Source< ? > getSourceForIndex( final ViewerState state, final int sourceIndex )
 		{
 			final List< SourceState< ? > > ss = state.getSources();
@@ -231,22 +290,22 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Eye icon normal size.
 	 */
-	private ImageIcon visibleIcon;
+	private final ImageIcon visibleIcon;
 
 	/**
 	 * Crossed eye icon normal size.
 	 */
-	private ImageIcon notVisibleIcon;
+	private final ImageIcon notVisibleIcon;
 
 	/**
 	 * Eye icon small.
 	 */
-	private ImageIcon visibleIconSmall;
+	private final ImageIcon visibleIconSmall;
 
 	/**
 	 * Crossed eye icon small.
 	 */
-	private ImageIcon notVisibleIconSmall;
+	private final ImageIcon notVisibleIconSmall;
 
 	/**
 	 * Label representing the visibility state of the source.
@@ -346,37 +405,27 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		this.viewerPanel = vp;
 		this.sourceIndexHelper = new SourceIndexHelper( visGro, vp );
 		this.setupAssignments = sa;
-		initialize();
+
+		visibleIcon = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "visible.png" ), "Visible" );
+		notVisibleIcon = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "notVisible.png" ), "Not Visible" );
+		visibleIconSmall = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "visible_small.png" ), "Visible" );
+		notVisibleIconSmall = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "notVisible_small.png" ), "Not Visible" );
+
+		removeAllGroups();
 
 		final SourceGroup all = new SourceGroup( "All" );
-		this.viewerPanel.addGroup( all );
+		viewerPanel.addGroup( all );
+		sourceIndexHelper.setGroupActive( all, true );
+		sourceIndexHelper.setCurrentGroup( all );
 		groupLookup.put( all, new GroupProperties( "All", true ) );
-		while ( visGro.getSourceGroups().size() > 1 )
-		{
-			final SourceGroup g = visGro.getSourceGroups().get( 0 );
-			viewerPanel.removeGroup( g );
-		}
-
-		visGro.setCurrentGroup( 1 );
-		visGro.setGroupActive( 1, true );
 
 		setupTabbedPane();
 		addListeners( manualTE );
 	}
 
-	/**
-	 * Initialize components.
-	 */
-	private void initialize()
+	private void removeAllGroups()
 	{
-		visibleIcon = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "visible.png" ), "Visible" );
-		notVisibleIcon = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "notVisible.png" ), "Not Visible" );
-
-		visibleIconSmall = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "visible_small.png" ), "Visible" );
-		notVisibleIconSmall = new ImageIcon( SelectionAndGroupingTabs.class.getResource( "notVisible_small.png" ),
-				"Not Visible" );
-
-		groupLookup.put( viewerPanel.getState().getSourceGroups().get( 0 ), new GroupProperties( "All", true ) );
+		new ArrayList<>( visGro.getSourceGroups() ).forEach( viewerPanel::removeGroup );
 	}
 
 	/**
@@ -396,40 +445,36 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 		this.addTab( "Group Control", createGroupControl() );
 
-		this.addChangeListener( new ChangeListener()
-		{
-			@Override
-			public void stateChanged( final ChangeEvent e )
+		this.addChangeListener( e -> {
+			final DisplayMode displayMode = viewerPanel.getState().getDisplayMode();
+			if ( getSelectedIndex() == 1 )
 			{
-				if ( getSelectedIndex() == 1 )
+				if ( singleSourceMode )
 				{
-					if ( singleSourceMode )
-					{
-						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.GROUP )
-							viewerPanel.setDisplayMode( DisplayMode.GROUP );
-					}
-					else
-					{
-						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.FUSEDGROUP )
-							viewerPanel.setDisplayMode( DisplayMode.FUSEDGROUP );
-					}
-					groupMode = true;
+					if ( displayMode != DisplayMode.GROUP )
+						viewerPanel.setDisplayMode( DisplayMode.GROUP );
 				}
 				else
 				{
-					sourcesComboBox.setSelectedIndex( visGro.getCurrentSource() );
-					if ( singleSourceMode )
-					{
-						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.SINGLE )
-							viewerPanel.setDisplayMode( DisplayMode.SINGLE );
-					}
-					else
-					{
-						if ( viewerPanel.getState().getDisplayMode() != DisplayMode.FUSED )
-							viewerPanel.setDisplayMode( DisplayMode.FUSED );
-					}
-					groupMode = false;
+					if ( displayMode != DisplayMode.FUSEDGROUP )
+						viewerPanel.setDisplayMode( DisplayMode.FUSEDGROUP );
 				}
+				groupMode = true;
+			}
+			else
+			{
+				sourcesComboBox.setSelectedItem( sourceIndexHelper.getCurrentSource() );
+				if ( singleSourceMode )
+				{
+					if ( displayMode != DisplayMode.SINGLE )
+						viewerPanel.setDisplayMode( DisplayMode.SINGLE );
+				}
+				else
+				{
+					if ( displayMode != DisplayMode.FUSED )
+						viewerPanel.setDisplayMode( DisplayMode.FUSED );
+				}
+				groupMode = false;
 			}
 		} );
 	}
@@ -454,70 +499,64 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			}
 		} );
 
-		visGro.addUpdateListener( new UpdateListener()
-		{
-
-			@Override
-			public void visibilityChanged( final Event e )
+		visGro.addUpdateListener( e -> /* TODO: still necessary? */ SwingUtilities.invokeLater( () -> {
+			if ( e.id == Event.CURRENT_SOURCE_CHANGED )
 			{
-				SwingUtilities.invokeLater( () -> {
-					if ( e.id == VisibilityAndGrouping.Event.CURRENT_SOURCE_CHANGED )
-					{
-						sourcesComboBox.setSelectedIndex( visGro.getCurrentSource() );
-					}
-					if ( e.id == VisibilityAndGrouping.Event.CURRENT_GROUP_CHANGED )
-					{
-						groupsComboBox.setSelectedIndex( visGro.getCurrentGroup() + 1 );
-					}
-					if ( e.id == VisibilityAndGrouping.Event.DISPLAY_MODE_CHANGED )
-					{
-						final DisplayMode mode = visGro.getDisplayMode();
-						if ( mode.equals( DisplayMode.FUSEDGROUP ) )
-						{
-							singleGroupModeCheckbox.setSelected( false );
-							singleSourceModeCheckbox.setSelected( false );
-							singleSourceMode = false;
-
-							setEnableVisibilityIcons( true );
-
-							setSelectedIndex( 1 );
-						}
-						else if ( mode.equals( DisplayMode.FUSED ) )
-						{
-							singleGroupModeCheckbox.setSelected( false );
-							singleSourceModeCheckbox.setSelected( false );
-							singleSourceMode = false;
-
-							setEnableVisibilityIcons( true );
-
-							setSelectedIndex( 0 );
-						}
-						else if ( mode.equals( DisplayMode.GROUP ) )
-						{
-							singleGroupModeCheckbox.setSelected( true );
-							singleSourceModeCheckbox.setSelected( true );
-							singleSourceMode = true;
-
-							setEnableVisibilityIcons( false );
-
-							setSelectedIndex( 1 );
-						}
-						else
-						{
-							singleGroupModeCheckbox.setSelected( true );
-							singleSourceModeCheckbox.setSelected( true );
-							sourceVisibilityLabel.setEnabled( false );
-							singleSourceMode = true;
-
-							setEnableVisibilityIcons( false );
-
-							setSelectedIndex( 0 );
-						}
-					}
-				} );
+				sourcesComboBox.setSelectedItem( sourceIndexHelper.getCurrentSource() );
 			}
-		} );
+			if ( e.id == Event.CURRENT_GROUP_CHANGED )
+			{
+				groupsComboBox.setSelectedIndex( visGro.getCurrentGroup() + 1 );
+			}
+			if ( e.id == Event.DISPLAY_MODE_CHANGED )
+			{
+				final DisplayMode mode = visGro.getDisplayMode();
+				if ( mode.equals( DisplayMode.FUSEDGROUP ) )
+				{
+					singleGroupModeCheckbox.setSelected( false );
+					singleSourceModeCheckbox.setSelected( false );
+					singleSourceMode = false;
+
+					setEnableVisibilityIcons( true );
+
+					setSelectedIndex( 1 );
+				}
+				else if ( mode.equals( DisplayMode.FUSED ) )
+				{
+					singleGroupModeCheckbox.setSelected( false );
+					singleSourceModeCheckbox.setSelected( false );
+					singleSourceMode = false;
+
+					setEnableVisibilityIcons( true );
+
+					setSelectedIndex( 0 );
+				}
+				else if ( mode.equals( DisplayMode.GROUP ) )
+				{
+					singleGroupModeCheckbox.setSelected( true );
+					singleSourceModeCheckbox.setSelected( true );
+					singleSourceMode = true;
+
+					setEnableVisibilityIcons( false );
+
+					setSelectedIndex( 1 );
+				}
+				else
+				{
+					singleGroupModeCheckbox.setSelected( true );
+					singleSourceModeCheckbox.setSelected( true );
+					sourceVisibilityLabel.setEnabled( false );
+					singleSourceMode = true;
+
+					setEnableVisibilityIcons( false );
+
+					setSelectedIndex( 0 );
+				}
+			}
+		} ) );
 	}
+
+	private final Map< Source< ? >, ConverterSetup > sourceToConverterSetup = new HashMap<>();
 
 	/**
 	 * Add information of new source to the UI.
@@ -528,15 +567,17 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	@Override
 	public synchronized void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
 	{
+		sourceToConverterSetup.put( source, converterSetup );
+
 		final String uniqueName = sourceNameBimap.add( source );
 
-		this.visGro.addSourceToGroup( getSourceIndex( source, viewerPanel ), 0 );
+		sourceIndexHelper.addSourceToGroup( source, 0 );
 		groupLookup.get( getGroup( "All" ) ).addSource( source );
 
-		sourcesComboBox.addItem( uniqueName );
+		sourcesComboBox.addItem( source );
 		intensitySlider.addSource( source, converterSetup );
 
-		sourcesComboBox.setSelectedIndex( getCurrentSourceIndex( viewerPanel ) );
+		sourcesComboBox.setSelectedItem( sourceIndexHelper.getCurrentSource() );
 		intensitySlider.setSource( getCurrentSource( viewerPanel ) );
 		groupsComboBox.setSelectedIndex( getCurrentGroupIndex( viewerPanel ) + 1 );
 		updateGroupSourceComponent();
@@ -553,7 +594,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		{
 			group.getSources().remove( source );
 		}
-		sourcesComboBox.removeItem( source.getName() );
+		sourcesComboBox.removeItem( source );
 		sourceNameBimap.remove( source );
 	}
 
@@ -581,15 +622,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				}
 				sourceVisibilityLabel.setEnabled( true );
 
-				final boolean visible = visGro.isSourceActive( getSourceIndex( sourceNameBimap.getSource( ( String ) sourcesComboBox.getSelectedItem() ), viewerPanel ) );
-				if ( visible )
-				{
-					sourceVisibilityLabel.setIcon( visibleIcon );
-				}
-				else
-				{
-					sourceVisibilityLabel.setIcon( notVisibleIcon );
-				}
+				final boolean visible = sourceIndexHelper.isSourceActive( ( Source< ? > ) sourcesComboBox.getSelectedItem() );
+				sourceVisibilityLabel.setIcon( visible ? visibleIcon : notVisibleIcon );
 			}
 		}
 	}
@@ -649,22 +683,13 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			@Override
 			public void mouseReleased( final MouseEvent e )
 			{
-				if ( !singleSourceMode )
-				{
-					boolean sourceActiveState = visGro.isSourceActive( sourcesComboBox.getSelectedIndex() );
-					sourceActiveState = !sourceActiveState;
-					if ( sourceActiveState )
-					{
-						sourceVisibilityLabel.setIcon( visibleIcon );
-					}
-					else
-					{
-						sourceVisibilityLabel.setIcon( notVisibleIcon );
-					}
-					visGro.getSources().get( sourcesComboBox.getSelectedIndex() ).setActive( sourceActiveState );
-					viewerPanel.requestRepaint();
-					sourcesComboBox.repaint();
-				}
+				final Source< ? > source = ( Source< ? > ) sourcesComboBox.getSelectedItem();
+
+				final boolean active = !sourceIndexHelper.isSourceActive( source );
+				visGro.setSourceActive( source, active );
+
+				sourceVisibilityLabel.setIcon( active ? visibleIcon : notVisibleIcon );
+				sourcesComboBox.repaint();
 			}
 		} );
 
@@ -672,64 +697,35 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		final JButton colorButton = new JButton();
 		colorButton.setPreferredSize( new Dimension( 15, 15 ) );
 		colorButton.setBackground( BACKGROUND_COLOR );
-		colorButton.addActionListener( new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed( final ActionEvent ev )
+		colorButton.addActionListener( e -> {
+			Color newColor = null;
+			final ConverterSetup setup = sourceToConverterSetup.get( sourcesComboBox.getSelectedItem() );
+			newColor = JColorChooser.showDialog( null, "Select Source Color", getColor( setup ) );
+			if ( newColor != null )
 			{
-				Color newColor = null;
-				final ConverterSetup setup = setupAssignments.getConverterSetups().get( sourcesComboBox.getSelectedIndex() );
-				if ( ev.getSource() == colorButton )
-				{
-					newColor = JColorChooser.showDialog( null, "Select Source Color", getColor( setup ) );
-					if ( newColor != null )
-					{
-						colorButton.setBackground( newColor );
-
-						setColor( setup, newColor );
-					}
-				}
+				colorButton.setBackground( newColor );
+				setColor( setup, newColor );
 			}
 		} );
 
 		// add action listener to source combobox
-		sourcesComboBox.addItemListener( new ItemListener()
-		{
-			@Override
-			public void itemStateChanged( final ItemEvent e )
+		sourcesComboBox.addItemListener( e -> {
+			if ( e.getStateChange() == ItemEvent.SELECTED )
 			{
-				if ( e.getStateChange() == ItemEvent.SELECTED )
+				final Source< ? > source = ( Source< ? > ) sourcesComboBox.getSelectedItem();
+				sourcesComboBox.setToolTipText( sourceNameBimap.getName( source ) );
+				notifySelectionChangeListeners( false );
+				if ( source != null )
 				{
-					sourcesComboBox.setToolTipText( ( String ) sourcesComboBox.getSelectedItem() );
-					final Source< ? > p = sourceNameBimap.getSource( ( String ) sourcesComboBox.getSelectedItem() );
-					notifySelectionChangeListeners( false );
-					if ( p != null )
-					{
-						visGro.setCurrentSource( getSourceIndex( p, viewerPanel ) );
-						intensitySlider.setSource( p );
-						informationPanel.setType( p.getType().getClass().getSimpleName() );
-						colorButton.setVisible( p.getType().getClass() != ARGBType.class );
-						colorButton.setBackground( getColor( setupAssignments.getConverterSetups()
-								.get( sourcesComboBox.getSelectedIndex() ) ) );
-						if ( !singleSourceMode )
-						{
-							sourceVisibilityLabel.setEnabled( true );
-							if ( visGro.isSourceActive( sourcesComboBox.getSelectedIndex() ) )
-							{
-								sourceVisibilityLabel.setIcon( visibleIcon );
-							}
-							else
-							{
-								sourceVisibilityLabel.setIcon( notVisibleIcon );
-							}
-						}
-						else
-						{
-							sourceVisibilityLabel.setIcon( visibleIcon );
-							sourceVisibilityLabel.setEnabled( false );
-						}
-					}
+					visGro.setCurrentSource( source );
+					intensitySlider.setSource( source );
+					informationPanel.setType( source.getType().getClass().getSimpleName() );
+
+					colorButton.setVisible( source.getType().getClass() != ARGBType.class );
+					colorButton.setBackground( getColor( sourceToConverterSetup.get( source ) ) );
+
+					final boolean active = sourceIndexHelper.isSourceActive( source );
+					sourceVisibilityLabel.setIcon( active ? visibleIcon : notVisibleIcon );
 				}
 			}
 		} );
@@ -786,27 +782,19 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		selectedSources.removeAll();
 		remainingSources.removeAll();
 
-		viewerPanel.getState().getSources().forEach( new Consumer< SourceState< ? > >()
-		{
-			@Override
-			public void accept( final SourceState< ? > sourceState )
-			{
-				if ( getCurrentGroup( viewerPanel ).getSourceIds().contains( getSourceIndex( sourceState.getSpimSource(), viewerPanel ) ) )
-				{
-					selectedSources.add( createEntry( sourceState ), "growx, wrap" );
-				}
-				else
-				{
-					remainingSources.add( createEntry( sourceState ), "growx, wrap" );
-				}
-				repaintComponents();
-			}
+		viewerPanel.getState().getSources().forEach( sourceState -> {
+			final Source< ? > source = sourceState.getSpimSource();
+			if ( getCurrentGroup( viewerPanel ).getSourceIds().contains( sourceIndexHelper.getSourceIndex( source ) ) )
+				selectedSources.add( createEntry( source ), "growx, wrap" );
+			else
+				remainingSources.add( createEntry( source ), "growx, wrap" );
+			repaintComponents();
 		} );
 	}
 
-	private Component createEntry( final SourceState< ? > t )
+	private Component createEntry( final Source< ? > source )
 	{
-		final JLabel p = new JLabel( sourceNameBimap.getName( t ) );
+		final JLabel p = new JLabel( sourceNameBimap.getName( source ) );
 		p.setBackground( BACKGROUND_COLOR );
 		p.setForeground( FOREGROUND_COLOR );
 		p.setBorder( null );
@@ -819,20 +807,20 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				{
 					final SourceGroup group = getGroup( ( String ) groupsComboBox.getSelectedItem() );
 					final GroupProperties groupProps = groupLookup.get( group );
-					if ( groupProps.getSources().contains( t.getSpimSource() ) )
+					if ( groupProps.getSources().contains( source ) )
 					{
-						groupProps.removeSource( t.getSpimSource() );
+						groupProps.removeSource( source );
 						selectedSources.remove( p );
 						remainingSources.add( p, "growx, wrap" );
-						visGro.removeSourceFromGroup( getSourceIndex( t.getSpimSource(), viewerPanel ),
+						sourceIndexHelper.removeSourceFromGroup( source,
 								getGroupIndex( ( String ) groupsComboBox.getSelectedItem(), viewerPanel ) );
 					}
 					else
 					{
-						groupProps.addSource( t.getSpimSource() );
+						groupProps.addSource( source );
 						remainingSources.remove( p );
 						selectedSources.add( p, "growx, wrap" );
-						visGro.addSourceToGroup( getSourceIndex( t.getSpimSource(), viewerPanel ),
+						sourceIndexHelper.addSourceToGroup( source,
 								getGroupIndex( ( String ) groupsComboBox.getSelectedItem(), viewerPanel ) );
 					}
 
@@ -1134,25 +1122,23 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	}
 
 	// A combobox renderer displaying the visibility state of the sources.
-	class SourceComboBoxRenderer extends JLabel implements ListCellRenderer< String >
+	class SourceComboBoxRenderer extends JLabel implements ListCellRenderer< Source< ? > >
 	{
 		private static final long serialVersionUID = 1L;
 
 		@Override
-		public Component getListCellRendererComponent( final JList< ? extends String > list, final String value, final int index,
+
+		public Component getListCellRendererComponent( final JList< ? extends Source< ? > > list, final Source< ? > value, final int index,
 				final boolean isSelected, final boolean cellHasFocus )
 		{
 
 			if ( value != null )
 			{
-				this.setText( value );
-				this.setToolTipText( value );
-				this.setIcon( visibleIconSmall );
-				final boolean visible = visGro.isSourceActive( getSourceIndex( sourceNameBimap.getSource( value ), viewerPanel ) );
-				if ( !singleSourceMode && !visible )
-				{
-					this.setIcon( notVisibleIconSmall );
-				}
+				final String uniqueName = sourceNameBimap.getName( value );
+				this.setText( uniqueName );
+				this.setToolTipText( uniqueName );
+				final boolean visible = sourceIndexHelper.isSourceActive( value );
+				this.setIcon( visible ? visibleIconSmall : notVisibleIconSmall );
 			}
 			else
 			{
@@ -1170,7 +1156,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 			return this;
 		}
-
 	}
 
 	// A combobox renderer displaying the visibility state of the groups.
@@ -1240,25 +1225,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		return getSource( viewerPanel.getState().getCurrentSource(), viewerPanel );
 	}
 
-	protected static int getCurrentSourceIndex( final ViewerPanel viewerPanel )
-	{
-		return viewerPanel.getState().getCurrentSource();
-	}
-
 	protected static int getCurrentGroupIndex( final ViewerPanel viewerPanel )
 	{
 		return viewerPanel.getState().getCurrentGroup();
-	}
-
-	private static int getSourceIndex( final Source< ? > src, final ViewerPanel viewerPanel )
-	{
-		final List< SourceState< ? > > sources = viewerPanel.getState().getSources();
-		for ( final SourceState< ? > s : sources )
-		{
-			if ( s.getSpimSource().equals( src ) )
-			{ return sources.indexOf( s ); }
-		}
-		return -1;
 	}
 
 	protected SourceGroup getGroup( final String name )
@@ -1285,7 +1254,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 	public interface SelectionChangeListener
 	{
-		public void selectionChanged( final boolean isOverlay );
+		void selectionChanged( final boolean isOverlay );
 	}
 
 	public Listeners< SelectionChangeListener > selectionChangeListeners()
