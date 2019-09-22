@@ -124,10 +124,17 @@ public abstract class BdvHandle implements Bdv
 			}
 
 			if ( sources != null )
-				for ( final SourceAndConverter< ? > soc : sources ) {
-					viewer.addSource(soc);
-					notifySourceAdded(soc.getSpimSource());
+			{
+				for ( final SourceAndConverter< ? > soc : sources )
+					viewer.addSource( soc );
+
+				if ( converterSetups != null )
+				{
+					final int size = Math.min( sources.size(), converterSetups.size() );
+					for ( int i = 0; i < size; i++ )
+						notifySourceAdded( sources.get( i ).getSpimSource(), converterSetups.get( i ) );
 				}
+			}
 		}
 
 		if ( initTransform )
@@ -194,16 +201,18 @@ public abstract class BdvHandle implements Bdv
 				viewer.getDisplay().removeOverlayRenderer( o );
 
 		if ( sources != null )
-			for ( final SourceAndConverter< ? > soc : sources ) {
-				viewer.removeSource(soc.getSpimSource());
-				notifySourceAdded(soc.getSpimSource());
+		{
+			for ( final SourceAndConverter< ? > soc : sources )
+			{
+				viewer.removeSource( soc.getSpimSource() );
+				notifySourceRemoved( soc.getSpimSource() );
 			}
+		}
 	}
 
 	public interface SourceChangeListener
 	{
-		void sourceAdded( final Source< ? > source );
-
+		void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup );
 		void sourceRemoved( final Source< ? > source );
 	}
 
@@ -214,12 +223,12 @@ public abstract class BdvHandle implements Bdv
 		return sourceChangeListeners;
 	}
 
-	void notifySourceAdded( final Source source )
+	void notifySourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
 	{
-		sourceChangeListeners.list.forEach( l -> l.sourceAdded( source ) );
+		sourceChangeListeners.list.forEach( l -> l.sourceAdded( source, converterSetup ) );
 	}
 
-	void notifySourceRemoved( final Source source )
+	void notifySourceRemoved( final Source< ? > source ) // TODO: This should be called from somewhere!!!!
 	{
 		sourceChangeListeners.list.forEach( l -> l.sourceRemoved( source ) );
 	}

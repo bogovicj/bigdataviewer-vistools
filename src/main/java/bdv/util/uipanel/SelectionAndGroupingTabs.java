@@ -86,6 +86,7 @@ import bdv.viewer.VisibilityAndGrouping.Event;
 import bdv.viewer.VisibilityAndGrouping.UpdateListener;
 import bdv.viewer.state.SourceGroup;
 import bdv.viewer.state.SourceState;
+import bdv.viewer.state.ViewerState;
 
 /**
  * The tabbed pane with all BDV-UI components.
@@ -120,6 +121,40 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 * Combobox displaying all groups with an option to create new groups.
 	 */
 	private JComboBox< String > groupsComboBox;
+
+	/**
+	 * Helpers for using sources instead of indices...
+	 */
+	static class SourceIndexHelper
+	{
+		private final VisibilityAndGrouping visibility;
+
+		private final ViewerPanel viewer;
+
+		public SourceIndexHelper( final VisibilityAndGrouping visibility, final ViewerPanel viewer )
+		{
+			this.visibility = visibility;
+			this.viewer = viewer;
+		}
+
+		public Source< ? > getCurrentSource()
+		{
+			final ViewerState state = viewer.getState();
+			final int i = state.getCurrentSource();
+			return getSourceForIndex( state, i );
+		}
+
+		// TODO add similar method to SourceState
+		private Source< ? > getSourceForIndex( final ViewerState state, final int sourceIndex )
+		{
+			final List< SourceState< ? > > ss = state.getSources();
+			if ( sourceIndex < 0 || sourceIndex > ss.size() )
+				return null;
+			return ss.get( sourceIndex ).getSpimSource();
+		}
+	}
+
+	private final SourceIndexHelper sourceIndexHelper;
 
 	/**
 	 * Maps sources to/from unique names.
@@ -272,7 +307,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * The min-max range slider-component.
 	 */
-	private RangeSliderSpinnerPanel intensitySlider;
+	private IntensitySlider intensitySlider;
 
 	/**
 	 * Group mode active.
@@ -309,6 +344,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 		this.visGro = visGro;
 		this.viewerPanel = vp;
+		this.sourceIndexHelper = new SourceIndexHelper( visGro, vp );
 		this.setupAssignments = sa;
 		initialize();
 
@@ -490,15 +526,15 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 * source selection.
 	 */
 	@Override
-	public synchronized void sourceAdded( final Source< ? > p )
+	public synchronized void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
 	{
-		final String uniqueName = sourceNameBimap.add( p );
+		final String uniqueName = sourceNameBimap.add( source );
 
-		this.visGro.addSourceToGroup( getSourceIndex( p, viewerPanel ), 0 );
-		groupLookup.get( getGroup( "All" ) ).addSource( p );
+		this.visGro.addSourceToGroup( getSourceIndex( source, viewerPanel ), 0 );
+		groupLookup.get( getGroup( "All" ) ).addSource( source );
 
 		sourcesComboBox.addItem( uniqueName );
-		intensitySlider.addSource( p );
+		intensitySlider.addSource( source, converterSetup );
 
 		sourcesComboBox.setSelectedIndex( getCurrentSourceIndex( viewerPanel ) );
 		intensitySlider.setSource( getCurrentSource( viewerPanel ) );
@@ -737,9 +773,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		} );
 
 		// add range slider for intensity boundaries.
-		intensitySlider = new RangeSliderSpinnerPanel( setupAssignments, viewerPanel );
-		intensitySlider.setPreferredSize( new Dimension( 20, 20 ) );
-		p.add( intensitySlider, "span, growx, wrap" );
+		intensitySlider = new IntensitySlider( setupAssignments, viewerPanel );
+		final RangeSliderSpinnerPanel intensitySliderPanel = intensitySlider.getPanel();
+		intensitySliderPanel.setPreferredSize( new Dimension( 20, 20 ) );
+		p.add( intensitySliderPanel, "span, growx, wrap" );
 		p.add( singleSourceModeCheckbox, "span, growx" );
 		return p;
 	}
@@ -1213,12 +1250,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		return viewerPanel.getState().getCurrentGroup();
 	}
 
-	protected Source< ? > getSource( final String name )
-	{
-		return viewerPanel.getState().getSources().get( getSourceIndex( sourceNameBimap.getSource( name ), viewerPanel ) ).getSpimSource();
-	}
-
-	protected static int getSourceIndex( final Source< ? > src, final ViewerPanel viewerPanel )
+	private static int getSourceIndex( final Source< ? > src, final ViewerPanel viewerPanel )
 	{
 		final List< SourceState< ? > > sources = viewerPanel.getState().getSources();
 		for ( final SourceState< ? > s : sources )

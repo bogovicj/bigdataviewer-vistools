@@ -36,7 +36,6 @@ import java.awt.event.KeyListener;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -52,7 +51,6 @@ import net.miginfocom.swing.MigLayout;
 
 import bdv.tools.brightness.SetupAssignments;
 import bdv.util.uipanel.rangeslider.RangeSlider;
-import bdv.viewer.Source;
 import bdv.viewer.ViewerPanel;
 
 /**
@@ -64,6 +62,7 @@ import bdv.viewer.ViewerPanel;
  * with a resize-button.
  *
  * @author Tim-Oliver Buchholz, CSBD/MPI-CBG Dresden
+ * @author Tobias Pietzsch
  */
 public class RangeSliderSpinnerPanel extends JPanel
 {
@@ -92,7 +91,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 	/**
 	 * Range slider number of steps.
 	 */
-	final double numberOfSteps = 1001.0;
+	private static final int sliderLength = 10000;
 
 	/**
 	 * Display range upper bound.
@@ -115,16 +114,6 @@ public class RangeSliderSpinnerPanel extends JPanel
 	private final ListenableDouble lowerValue = new ListenableDouble( 0 );
 
 	/**
-	 * Store the lower bound for every source.
-	 */
-	private final HashMap< Source< ? >, Double > SOURCE_lowerBoundLookup = new HashMap<>();
-
-	/**
-	 * Store the upper bound for every source.
-	 */
-	private final HashMap< Source< ? >, Double > SOURCE_upperBoundLookup = new HashMap<>();
-
-	/**
 	 * The minimum spinner.
 	 */
 	private final JSpinner currentMinSpinner;
@@ -134,10 +123,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 */
 	private final JSpinner currentMaxSpinner;
 
-	/**
-	 * Index of the currently selected source.
-	 */
-	private int SOURCE_currentSourceIdx; // TODO: private field SOURCE_currentSourceIdx is never assigned
+	private Range range;
 
 	private ChangeListener maxSpinnerCL;
 
@@ -201,28 +187,11 @@ public class RangeSliderSpinnerPanel extends JPanel
 		currentMaxSpinner = new JSpinner( new SpinnerNumberModel( 1.0, 0.0, 1.0, 1.0 ) );
 		setupMaxSpinner();
 
-		rs = new RangeSlider( 0, RS_UPPER_BOUND );
+		rs = new RangeSlider( 0, sliderLength );
 		setupRangeSlider();
 
-		lowerValue.subscribe( new DoubleListener()
-		{
-
-			@Override
-			public void doubleChanged( final double d )
-			{
-				setDisplayRange();
-			}
-		} );
-
-		upperValue.subscribe( new DoubleListener()
-		{
-
-			@Override
-			public void doubleChanged( final double d )
-			{
-				setDisplayRange();
-			}
-		} );
+		lowerValue.subscribe( d -> setDisplayRange() );
+		upperValue.subscribe( d -> setDisplayRange() );
 
 		final JButton shrinkRange = new JButton( "><" );
 		setupShrinkRangeButton( shrinkRange );
@@ -255,8 +224,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 			upperBound.updateListeners();
 			lowerValue.updateListeners();
 			upperValue.updateListeners();
-			SOURCE_upperBoundLookup.put( viewerPanel.getState().getSources().get( SOURCE_currentSourceIdx ).getSpimSource(), upperValue.getValue() );
-			SOURCE_lowerBoundLookup.put( viewerPanel.getState().getSources().get( SOURCE_currentSourceIdx ).getSpimSource(), lowerValue.getValue() );
+			range.setUpperBound( upperValue.getValue() );
+			range.setLowerBound( lowerValue.getValue() );
 			rs.setValue( 0 );
 			rs.setUpperValue( RS_UPPER_BOUND );
 		} );
@@ -271,18 +240,18 @@ public class RangeSliderSpinnerPanel extends JPanel
 		rs.setMinorTickSpacing( 1 );
 
 		upperValue.subscribe( d -> {
-			if ( d != posToLowerValue( rs.getUpperValue() ) )
+			if ( d != posToValue( rs.getUpperValue() ) )
 				setRangeSlider();
 		} );
 
 		lowerValue.subscribe( d -> {
-			if ( d != posToLowerValue( rs.getValue() ) )
+			if ( d != posToValue( rs.getValue() ) )
 				setRangeSlider();
 		} );
 
 		rs.addChangeListener( e -> {
-			upperValue.setValue( posToUpperValue( rs.getUpperValue() ) );
-			lowerValue.setValue( posToLowerValue( rs.getValue() ) );
+			upperValue.setValue( posToValue( rs.getUpperValue() ) );
+			lowerValue.setValue( posToValue( rs.getValue() ) );
 			lowerValue.updateListeners();
 			upperValue.updateListeners();
 		} );
@@ -308,7 +277,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		} );
 
 		maxSpinnerCL = e -> {
-			upperValue.setValue( ( double ) ( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).getValue() );
+			upperValue.setValue( ( double ) currentMaxSpinner.getModel().getValue() );
 			upperValue.updateListeners();
 		};
 		currentMaxSpinner.addChangeListener( maxSpinnerCL );
@@ -335,12 +304,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 		} );
 
 		minSpinnerCL = e -> {
-			if ( e.getSource() == currentMinSpinner )
-			{
-				final double value = ( double ) ( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).getValue();
-				lowerValue.setValue( value );
-				lowerValue.updateListeners();
-			}
+			lowerValue.setValue( ( double ) currentMinSpinner.getModel().getValue() );
+			lowerValue.updateListeners();
 		};
 		currentMinSpinner.addChangeListener( minSpinnerCL );
 		currentMinSpinner.setEditor( new LowerBoundNumberEditor( currentMinSpinner ) );
@@ -377,7 +342,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 						if ( tmp > upperBound.getValue() )
 						{
 							upperBound.setValue( tmp );
-							SOURCE_upperBoundLookup.put( viewerPanel.getState().getSources().get( SOURCE_currentSourceIdx ).getSpimSource(), upperBound.getValue() );
+							range.setUpperBound( upperBound.getValue() );
 							upperValue.setValue( tmp );
 							upperBound.updateListeners();
 							upperValue.updateListeners();
@@ -432,7 +397,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 						if ( tmp < lowerBound.getValue() )
 						{
 							lowerBound.setValue( tmp );
-							SOURCE_lowerBoundLookup.put( viewerPanel.getState().getSources().get( SOURCE_currentSourceIdx ).getSpimSource(), lowerBound.getValue() );
+							range.setLowerBound( lowerBound.getValue() );
 							lowerValue.setValue( tmp );
 							lowerBound.updateListeners();
 							lowerValue.updateListeners();
@@ -464,56 +429,88 @@ public class RangeSliderSpinnerPanel extends JPanel
 	{
 		final double min = lowerValue.getValue();
 		final double max = upperValue.getValue();
-		setupAssignments.getConverterSetups().get( SOURCE_currentSourceIdx ).setDisplayRange( min, max );
+		range.setValueRange( min, max );
 	}
 
 	/**
-	 * Convert range-slider position to upper-value.
-	 *
-	 * @param pos
-	 *            of range-slider
-	 * @return value
+	 * Set the knobs of the range-slider.
 	 */
-	private double posToUpperValue( final int pos )
+	private void setRangeSlider()
 	{
-		final double frac = pos / 1000d;
-		final double val = Math.abs( upperBound.getValue() - lowerBound.getValue() ) * frac + lowerBound.getValue();
-		return val;
+		final int upper = valueToPos( upperValue.getValue() );
+		final int lower = valueToPos( lowerValue.getValue() );
+		rs.setUpperValue( upper );
+		rs.setValue( lower );
 	}
 
 	/**
-	 * Convert range-slider position to lower-value.
+	 * Convert range-slider position to value.
 	 *
 	 * @param pos
 	 *            of range-slider
-	 * @return value
 	 */
-	// TODO: is identical to posToUpperValue
-	private double posToLowerValue( final int pos )
+	private double posToValue( final int pos )
 	{
-		final double frac = pos / 1000d;
-		final double val = Math.abs( upperBound.getValue() - lowerBound.getValue() ) * frac + lowerBound.getValue();
-		return val;
+		final double dmin = lowerBound.getValue();
+		final double dmax = upperBound.getValue();
+		return ( pos * ( dmax - dmin ) / sliderLength ) + dmin;
 	}
 
-	public synchronized void setSource( final Source< ? > src )
+	/**
+	 * Convert value to range-slider position.
+	 */
+	private int valueToPos( final double value )
+	{
+		final double dmin = lowerBound.getValue();
+		final double dmax = upperBound.getValue();
+		return ( int ) Math.round( ( value - dmin ) * sliderLength / ( dmax - dmin ) );
+	}
+
+
+
+
+
+
+
+	public interface Range
+	{
+		double getLowerBound();
+
+		void setLowerBound( final double value );
+
+		double getLowerValue();
+
+		void setLowerValue( final double value );
+
+		double getUpperBound();
+
+		void setUpperBound( final double value );
+
+		double getUpperValue();
+
+		void setUpperValue( final double value );
+
+		void setValueRange( double lowerValue, double upperValue );
+	}
+
+	public synchronized void setRange( final Range range )
 	{
 		currentMaxSpinner.removeChangeListener( maxSpinnerCL );
 		currentMinSpinner.removeChangeListener( minSpinnerCL );
-		if ( SOURCE_lowerBoundLookup.containsKey( src ) )
+
+		if ( range != null ) // TODO: what to do when a null range is added
 		{
-			lowerBound.setValue( SOURCE_lowerBoundLookup.get( src ) );
-			upperBound.setValue( SOURCE_upperBoundLookup.get( src ) );
+			this.range = range;
 
-			final double displayRangeMin = setupAssignments.getConverterSetups().get( SOURCE_currentSourceIdx ).getDisplayRangeMin();
-			final double displayRangeMax = setupAssignments.getConverterSetups().get( SOURCE_currentSourceIdx ).getDisplayRangeMax();
-			lowerValue.setValue( displayRangeMin );
-			upperValue.setValue( displayRangeMax );
+			lowerBound.setValue( range.getLowerBound() );
+			upperBound.setValue( range.getUpperBound() );
+			lowerValue.setValue( range.getLowerValue() );
+			upperValue.setValue( range.getUpperValue() );
 
-			( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).setMinimum( lowerBound.getValue() );
-			( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).setMaximum( upperBound.getValue() );
-			( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).setMinimum( lowerBound.getValue() );
-			( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).setMaximum( upperBound.getValue() );
+			( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).setMinimum( range.getLowerBound() );
+			( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).setMaximum( range.getUpperBound() );
+			( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).setMinimum( range.getLowerBound() );
+			( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).setMaximum( range.getUpperBound() );
 
 			lowerValue.updateListeners();
 			upperValue.updateListeners();
@@ -524,33 +521,5 @@ public class RangeSliderSpinnerPanel extends JPanel
 			currentMaxSpinner.addChangeListener( maxSpinnerCL );
 			currentMinSpinner.addChangeListener( minSpinnerCL );
 		}
-	}
-
-	public void addSource( final Source< ? > src )
-	{
-		// TODO
-		final double displayRangeMin = setupAssignments.getConverterSetups().get( 0 ).getDisplayRangeMin();
-		final double displayRangeMax = setupAssignments.getConverterSetups().get( 0 ).getDisplayRangeMax();
-
-		SOURCE_lowerBoundLookup.put( src, displayRangeMin );
-		SOURCE_upperBoundLookup.put( src, displayRangeMax );
-	}
-
-	public synchronized void removeSource( final Source< ? > source )
-	{
-		SOURCE_lowerBoundLookup.remove( source );
-		SOURCE_upperBoundLookup.remove( source );
-	}
-
-	/**
-	 * Set the knobs of the range-slider.
-	 */
-	private void setRangeSlider()
-	{
-		final double range = upperBound.getValue() - lowerBound.getValue();
-		final int upperVal = ( int ) ( ( ( upperValue.getValue() - lowerBound.getValue() ) / range ) * numberOfSteps );
-		final int lowerVal = ( int ) ( ( ( lowerValue.getValue() - lowerBound.getValue() ) / range ) * numberOfSteps );
-		rs.setUpperValue( upperVal );
-		rs.setValue( lowerVal );
 	}
 }

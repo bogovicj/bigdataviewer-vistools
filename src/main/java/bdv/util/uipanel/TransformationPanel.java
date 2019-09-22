@@ -28,6 +28,7 @@
  */
 package bdv.util.uipanel;
 
+import bdv.tools.brightness.ConverterSetup;
 import bdv.util.Affine3DHelpers;
 
 import java.awt.Color;
@@ -507,7 +508,7 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 	}
 
 	@Override
-	public void sourceAdded( final Source< ? > source )
+	public void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
 	{
 		transformationLookup.put( source,
 				getInitialTransformation( viewerPanel.getVisibilityAndGrouping().getCurrentSource() ) );
