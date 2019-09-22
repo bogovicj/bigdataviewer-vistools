@@ -127,12 +127,12 @@ public class RangeSliderSpinnerPanel extends JPanel
 	/**
 	 * Store the lower bound for every source.
 	 */
-	private final HashMap< Source, Double > lowerBoundLookup = new HashMap<>();
+	private final HashMap< Source< ? >, Double > lowerBoundLookup = new HashMap<>();
 
 	/**
 	 * Store the upper bound for every source.
 	 */
-	private final HashMap< Source, Double > upperBoundLookup = new HashMap<>();
+	private final HashMap< Source< ? >, Double > upperBoundLookup = new HashMap<>();
 
 	/**
 	 * The minimum spinner.
@@ -636,7 +636,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		return val;
 	}
 
-	public synchronized void setSource( final Source src)
+	public synchronized void setSource( final Source< ? > src)
 	{
 		currentSourceIdx = SelectionAndGroupingTabs.getSourceIndex( src, viewerPanel );
 		currentMaxSpinner.removeChangeListener( maxSpinnerCL );
@@ -678,7 +678,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		}
 	}
 
-	public void addSource( final Source src )
+	public void addSource( final Source< ? > src )
 	{
 		final double displayRangeMin = setupAssignments.getConverterSetups().get( SelectionAndGroupingTabs.getSourceIndex( src, viewerPanel ) ).getDisplayRangeMin();
 		final double displayRangeMax = setupAssignments.getConverterSetups().get( SelectionAndGroupingTabs.getSourceIndex( src, viewerPanel ) ).getDisplayRangeMax();
@@ -687,7 +687,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		upperBoundLookup.put( src, displayRangeMax );
 	}
 
-	public synchronized void removeSource( final Source source )
+	public synchronized void removeSource( final Source< ? > source )
 	{
 		final int sourceID = currentSourceIdx;
 		lowerBoundLookup.remove( sourceID );
