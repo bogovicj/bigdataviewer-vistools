@@ -69,7 +69,7 @@ public class GroupProperties {
 	 */
 	public GroupProperties(final String groupName, final boolean visibility) {
 		this.groupName = groupName;
-		this.sources = new HashSet<Source>();
+		this.sources = new HashSet<>();
 		this.visibility = visibility;
 	}
 
@@ -82,9 +82,9 @@ public class GroupProperties {
 	}
 
 	/**
-	 * Names of all sources assigned to this group.
+	 * Returns the set of sources assigned to this group.
 	 *
-	 * @return names of the sources
+	 * @return all sources in group
 	 */
 	public Set<Source> getSources() {
 		return sources;
@@ -93,7 +93,7 @@ public class GroupProperties {
 	/**
 	 * Add a source to this group.
 	 *
-	 * @param source name of the source to add
+	 * @param source the source to add
 	 */
 	public void addSource(final Source source) {
 		sources.add(source);
@@ -102,16 +102,12 @@ public class GroupProperties {
 	/**
 	 * Remove a source from this group.
 	 *
-	 * @param source of the source to remove
+	 * @param source the source to remove
 	 */
 	public void removeSource(final Source source) {
 		sources.remove(source);
 	}
 
-	/**
-	 *
-	 * @return visibility
-	 */
 	public boolean isVisible() {
 		return visibility;
 	}
