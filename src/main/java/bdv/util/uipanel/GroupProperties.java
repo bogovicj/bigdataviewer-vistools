@@ -28,46 +28,52 @@
  */
 package bdv.util.uipanel;
 
-import bdv.util.BdvSource;
-import bdv.viewer.Source;
-import bdv.viewer.state.SourceState;
-
 import java.util.HashSet;
 import java.util.Set;
 
+import bdv.viewer.Source;
+
 /**
- *
  * GroupProperties holds all information about a group added to the UI.
  *
  * @author Tim-Oliver Buchholz, CSBD/MPI-CBG Dresden
- *
  */
-public class GroupProperties {
-	private String groupName;
-	private Set<Source> sources;
+public class GroupProperties
+{
+	private final String groupName;
+
+	private final Set< Source > sources;
+
 	private boolean visibility;
 
 	/**
 	 * Information about a specific group.
 	 *
-	 * @param groupName name of the group
-	 * @param source name of the source to add
-	 * @param visibility of this group
+	 * @param groupName
+	 *            name of the group
+	 * @param source
+	 *            name of the source to add
+	 * @param visibility
+	 *            of this group
 	 */
-	public GroupProperties(final String groupName, final Source source, final boolean visibility) {
+	public GroupProperties( final String groupName, final Source source, final boolean visibility )
+	{
 		this.groupName = groupName;
 		this.sources = new HashSet<>();
-		this.sources.add(source);
+		this.sources.add( source );
 		this.visibility = visibility;
 	}
 
 	/**
 	 * Creates an empty group with no source.
 	 *
-	 * @param groupName name of the group
-	 * @param visibility of the group
+	 * @param groupName
+	 *            name of the group
+	 * @param visibility
+	 *            of the group
 	 */
-	public GroupProperties(final String groupName, final boolean visibility) {
+	public GroupProperties( final String groupName, final boolean visibility )
+	{
 		this.groupName = groupName;
 		this.sources = new HashSet<>();
 		this.visibility = visibility;
@@ -77,7 +83,8 @@ public class GroupProperties {
 	 *
 	 * @return group name
 	 */
-	public String getGroupName() {
+	public String getGroupName()
+	{
 		return groupName;
 	}
 
@@ -86,46 +93,56 @@ public class GroupProperties {
 	 *
 	 * @return all sources in group
 	 */
-	public Set<Source> getSources() {
+	public Set< Source > getSources()
+	{
 		return sources;
 	}
 
 	/**
 	 * Add a source to this group.
 	 *
-	 * @param source the source to add
+	 * @param source
+	 *            the source to add
 	 */
-	public void addSource(final Source source) {
-		sources.add(source);
+	public void addSource( final Source source )
+	{
+		sources.add( source );
 	}
 
 	/**
 	 * Remove a source from this group.
 	 *
-	 * @param source the source to remove
+	 * @param source
+	 *            the source to remove
 	 */
-	public void removeSource(final Source source) {
-		sources.remove(source);
+	public void removeSource( final Source source )
+	{
+		sources.remove( source );
 	}
 
-	public boolean isVisible() {
+	public boolean isVisible()
+	{
 		return visibility;
 	}
 
 	/**
 	 * Set visibility.
 	 *
-	 * @param visibility of this group
+	 * @param visibility
+	 *            of this group
 	 */
-	public void setVisible(final boolean visibility) {
+	public void setVisible( final boolean visibility )
+	{
 		this.visibility = visibility;
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals( final Object obj )
+	{
 
-		if (obj instanceof GroupProperties) {
-			GroupProperties g = (GroupProperties) obj;
+		if ( obj instanceof GroupProperties )
+		{
+			final GroupProperties g = ( GroupProperties ) obj;
 			return g.getGroupName() == this.groupName;
 		}
 		return false;
