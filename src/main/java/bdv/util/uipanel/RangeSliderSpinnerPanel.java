@@ -28,8 +28,6 @@
  */
 package bdv.util.uipanel;
 
-import bdv.util.BdvSource;
-import bdv.viewer.ViewerPanel;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Insets;
@@ -43,7 +41,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
@@ -55,15 +52,16 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import bdv.tools.brightness.SetupAssignments;
-import bdv.util.uipanel.rangeslider.RangeSlider;
-import bdv.viewer.Source;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
 import net.miginfocom.swing.MigLayout;
 
+import bdv.tools.brightness.SetupAssignments;
+import bdv.util.uipanel.rangeslider.RangeSlider;
+import bdv.viewer.Source;
+import bdv.viewer.ViewerPanel;
+
 /**
- *
  * A panel holding a two-knob range slider with a lower- and upper-value
  * spinner.
  *
@@ -72,7 +70,6 @@ import net.miginfocom.swing.MigLayout;
  * with a resize-button.
  *
  * @author Tim-Oliver Buchholz, CSBD/MPI-CBG Dresden
- *
  */
 public class RangeSliderSpinnerPanel extends JPanel
 {
@@ -107,22 +104,22 @@ public class RangeSliderSpinnerPanel extends JPanel
 	/**
 	 * Display range upper bound.
 	 */
-	private ListenableDouble upperBound = new ListenableDouble( 1 );
+	private final ListenableDouble upperBound = new ListenableDouble( 1 );
 
 	/**
 	 * Display range lower bound.
 	 */
-	private ListenableDouble lowerBound = new ListenableDouble( 0 );
+	private final ListenableDouble lowerBound = new ListenableDouble( 0 );
 
 	/**
 	 * Display range upper value. The currently selected upper value.
 	 */
-	private ListenableDouble upperValue = new ListenableDouble( 1 );
+	private final ListenableDouble upperValue = new ListenableDouble( 1 );
 
 	/**
 	 * Display range lower value. The currently selected lower value.
 	 */
-	private ListenableDouble lowerValue = new ListenableDouble( 0 );
+	private final ListenableDouble lowerValue = new ListenableDouble( 0 );
 
 	/**
 	 * Store the lower bound for every source.
@@ -168,7 +165,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 
 		private double d;
 
-		private List< DoubleListener > listeners;
+		private final List< DoubleListener > listeners;
 
 		public ListenableDouble( final double init )
 		{
@@ -233,7 +230,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				setDisplayRange();
 			}
@@ -243,7 +240,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				setDisplayRange();
 			}
@@ -275,7 +272,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void actionPerformed( ActionEvent e )
+			public void actionPerformed( final ActionEvent e )
 			{
 				if ( e.getSource() == shrinkRange )
 				{
@@ -308,7 +305,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( d != posToLowerValue( rs.getUpperValue() ) )
 				{
@@ -321,7 +318,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( d != posToLowerValue( rs.getValue() ) )
 				{
@@ -334,7 +331,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void stateChanged( ChangeEvent e )
+			public void stateChanged( final ChangeEvent e )
 			{
 				if ( e.getSource() == rs )
 				{
@@ -355,7 +352,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( d != ( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).getNumber().doubleValue() )
 				{
@@ -368,7 +365,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( 0 != ( double ) ( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).getMinimum() )
 				{
@@ -382,7 +379,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( 0 != ( double ) ( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).getMaximum() )
 				{
@@ -396,7 +393,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void stateChanged( ChangeEvent e )
+			public void stateChanged( final ChangeEvent e )
 			{
 				if ( e.getSource() == currentMaxSpinner )
 				{
@@ -417,7 +414,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( d != ( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).getNumber().doubleValue() )
 				{
@@ -430,7 +427,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( 0 != ( double ) ( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).getMinimum() )
 				{
@@ -443,7 +440,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void doubleChanged( double d )
+			public void doubleChanged( final double d )
 			{
 				if ( 0 != ( double ) ( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).getMaximum() )
 				{
@@ -456,11 +453,11 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 
 			@Override
-			public void stateChanged( ChangeEvent e )
+			public void stateChanged( final ChangeEvent e )
 			{
 				if ( e.getSource() == currentMinSpinner )
 				{
-					double value = ( double ) ( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).getValue();
+					final double value = ( double ) ( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).getValue();
 					lowerValue.setValue( value );
 					lowerValue.updateListeners();
 				}
@@ -475,9 +472,9 @@ public class RangeSliderSpinnerPanel extends JPanel
 
 		private static final long serialVersionUID = 1L;
 
-		private JFormattedTextField textField;
+		private final JFormattedTextField textField;
 
-		public UpperBoundNumberEditor( JSpinner spinner )
+		public UpperBoundNumberEditor( final JSpinner spinner )
 		{
 			super( spinner );
 			textField = getTextField();
@@ -485,11 +482,11 @@ public class RangeSliderSpinnerPanel extends JPanel
 		}
 
 		@Override
-		public void keyTyped( KeyEvent e )
+		public void keyTyped( final KeyEvent e )
 		{}
 
 		@Override
-		public void keyPressed( KeyEvent e )
+		public void keyPressed( final KeyEvent e )
 		{
 			final String text = textField.getText();
 			if ( !text.isEmpty() )
@@ -518,7 +515,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 						}
 					}
 				}
-				catch ( ParseException e1 )
+				catch ( final ParseException e1 )
 				{
 					textField.setText( Double.toString( upperBound.getValue() ) );
 				}
@@ -526,7 +523,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		}
 
 		@Override
-		public void keyReleased( KeyEvent e )
+		public void keyReleased( final KeyEvent e )
 		{}
 	}
 
@@ -535,9 +532,9 @@ public class RangeSliderSpinnerPanel extends JPanel
 
 		private static final long serialVersionUID = 1L;
 
-		private JFormattedTextField textField;
+		private final JFormattedTextField textField;
 
-		public LowerBoundNumberEditor( JSpinner spinner )
+		public LowerBoundNumberEditor( final JSpinner spinner )
 		{
 			super( spinner );
 			textField = getTextField();
@@ -545,11 +542,11 @@ public class RangeSliderSpinnerPanel extends JPanel
 		}
 
 		@Override
-		public void keyTyped( KeyEvent e )
+		public void keyTyped( final KeyEvent e )
 		{}
 
 		@Override
-		public void keyPressed( KeyEvent e )
+		public void keyPressed( final KeyEvent e )
 		{
 			final String text = textField.getText();
 			if ( !text.isEmpty() )
@@ -578,7 +575,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 						}
 					}
 				}
-				catch ( ParseException e1 )
+				catch ( final ParseException e1 )
 				{
 					textField.setText( Double.toString( lowerBound.getValue() ) );
 				}
@@ -586,7 +583,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		}
 
 		@Override
-		public void keyReleased( KeyEvent e )
+		public void keyReleased( final KeyEvent e )
 		{}
 	}
 
@@ -596,8 +593,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 */
 	private void setDisplayRange()
 	{
-		double min = lowerValue.getValue();
-		double max = upperValue.getValue();
+		final double min = lowerValue.getValue();
+		final double max = upperValue.getValue();
 		if ( isLabeling )
 		{
 			labelingMinMax.put( currentSourceIdx, new ValuePair<>( min, max ) );
@@ -617,8 +614,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 */
 	private double posToUpperValue( final int pos )
 	{
-		double frac = pos / 1000d;
-		double val = Math.abs( upperBound.getValue() - lowerBound.getValue() ) * frac + lowerBound.getValue();
+		final double frac = pos / 1000d;
+		final double val = Math.abs( upperBound.getValue() - lowerBound.getValue() ) * frac + lowerBound.getValue();
 		return val;
 	}
 
@@ -631,12 +628,12 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 */
 	private double posToLowerValue( final int pos )
 	{
-		double frac = pos / 1000d;
-		double val = Math.abs( upperBound.getValue() - lowerBound.getValue() ) * frac + lowerBound.getValue();
+		final double frac = pos / 1000d;
+		final double val = Math.abs( upperBound.getValue() - lowerBound.getValue() ) * frac + lowerBound.getValue();
 		return val;
 	}
 
-	public synchronized void setSource( final Source< ? > src)
+	public synchronized void setSource( final Source< ? > src )
 	{
 		currentSourceIdx = SelectionAndGroupingTabs.getSourceIndex( src, viewerPanel );
 		currentMaxSpinner.removeChangeListener( maxSpinnerCL );
@@ -647,16 +644,10 @@ public class RangeSliderSpinnerPanel extends JPanel
 			upperBound.setValue( upperBoundLookup.get( src ) );
 			if ( isLabeling )
 			{
-				
-				
-				
-				
+
 				// TODO: labelingMinMax has Integer indices
 				final Pair< Double, Double > p = labelingMinMax.get( src );
-				
-				
-				
-				
+
 				lowerValue.setValue( p.getA() );
 				upperValue.setValue( p.getB() );
 			}
@@ -698,12 +689,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 
 	public synchronized void removeSource( final Source< ? > source )
 	{
-		
-		
-		
-		
-		
-		
+
 		// TODO: Fix this
 		final int sourceID = currentSourceIdx;
 		lowerBoundLookup.remove( sourceID );
@@ -712,19 +698,13 @@ public class RangeSliderSpinnerPanel extends JPanel
 		{
 			labelingMinMax.remove( sourceID );
 		}
-		
-		
-		
-		
-		
-		
-		
+
 		final HashMap< Integer, Pair< Double, Double > > tmp = new HashMap<>();
 		final Iterator< Integer > it = labelingMinMax.keySet().iterator();
 		while ( it.hasNext() )
 		{
 			final int idx = it.next();
-			Pair< Double, Double > pair = labelingMinMax.get( idx );
+			final Pair< Double, Double > pair = labelingMinMax.get( idx );
 			if ( idx > sourceID )
 			{
 				tmp.put( idx - 1, pair );
@@ -742,7 +722,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 */
 	private void setRangeSlider()
 	{
-		double range = upperBound.getValue() - lowerBound.getValue();
+		final double range = upperBound.getValue() - lowerBound.getValue();
 		final int upperVal = ( int ) ( ( ( upperValue.getValue() - lowerBound.getValue() ) / range ) * numberOfSteps );
 		final int lowerVal = ( int ) ( ( ( lowerValue.getValue() - lowerBound.getValue() ) / range ) * numberOfSteps );
 		rs.setUpperValue( upperVal );
