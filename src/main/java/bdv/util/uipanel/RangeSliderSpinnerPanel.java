@@ -69,11 +69,6 @@ public class RangeSliderSpinnerPanel extends JPanel
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Upper bound of the range slider.
-	 */
-	private static final int RS_UPPER_BOUND = 1000;
-
-	/**
 	 * Setup assignments of the viewer.
 	 */
 	private final SetupAssignments setupAssignments;
@@ -218,8 +213,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 		shrinkRange.addActionListener( e -> {
 			lowerBound.setValue( ( double ) ( ( SpinnerNumberModel ) currentMinSpinner.getModel() ).getValue() );
 			upperBound.setValue( ( double ) ( ( SpinnerNumberModel ) currentMaxSpinner.getModel() ).getValue() );
-			upperValue.setValue( upperBound.getValue() );
 			lowerValue.setValue( lowerBound.getValue() );
+			upperValue.setValue( upperBound.getValue() );
 			lowerBound.updateListeners();
 			upperBound.updateListeners();
 			lowerValue.updateListeners();
@@ -227,7 +222,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 			range.setUpperBound( upperValue.getValue() );
 			range.setLowerBound( lowerValue.getValue() );
 			rs.setValue( 0 );
-			rs.setUpperValue( RS_UPPER_BOUND );
+			rs.setUpperValue( sliderLength );
 		} );
 	}
 
@@ -236,7 +231,7 @@ public class RangeSliderSpinnerPanel extends JPanel
 		rs.setBackground( Color.WHITE );
 		rs.setPreferredSize( new Dimension( 50, rs.getPreferredSize().height ) );
 		rs.setValue( 0 );
-		rs.setUpperValue( RS_UPPER_BOUND );
+		rs.setUpperValue( sliderLength);
 		rs.setMinorTickSpacing( 1 );
 
 		upperValue.subscribe( d -> {
