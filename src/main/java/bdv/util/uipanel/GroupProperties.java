@@ -42,7 +42,7 @@ public class GroupProperties
 {
 	private final String groupName;
 
-	private final Set< Source > sources;
+	private final Set< Source< ? > > sources;
 
 	private boolean visibility;
 
@@ -56,7 +56,7 @@ public class GroupProperties
 	 * @param visibility
 	 *            of this group
 	 */
-	public GroupProperties( final String groupName, final Source source, final boolean visibility )
+	public GroupProperties( final String groupName, final Source< ? > source, final boolean visibility )
 	{
 		this.groupName = groupName;
 		this.sources = new HashSet<>();
@@ -93,7 +93,7 @@ public class GroupProperties
 	 *
 	 * @return all sources in group
 	 */
-	public Set< Source > getSources()
+	public Set< Source< ? > > getSources()
 	{
 		return sources;
 	}
@@ -104,7 +104,7 @@ public class GroupProperties
 	 * @param source
 	 *            the source to add
 	 */
-	public void addSource( final Source source )
+	public void addSource( final Source< ? > source )
 	{
 		sources.add( source );
 	}
@@ -115,7 +115,7 @@ public class GroupProperties
 	 * @param source
 	 *            the source to remove
 	 */
-	public void removeSource( final Source source )
+	public void removeSource( final Source< ? > source )
 	{
 		sources.remove( source );
 	}
