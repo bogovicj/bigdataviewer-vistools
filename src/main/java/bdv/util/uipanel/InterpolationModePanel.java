@@ -29,77 +29,70 @@
 package bdv.util.uipanel;
 
 import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
+import java.awt.event.ItemListener;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
 import bdv.viewer.Interpolation;
-import bdv.viewer.InterpolationModeListener;
 import bdv.viewer.ViewerPanel;
 import net.miginfocom.swing.MigLayout;
 
 /**
- *
  * This panel holds the {@link Interpolation} mode selection.
  *
  * @author Tim-Oliver Buchholz, CSBD/MPI-CBG Dresden
- *
  */
 public class InterpolationModePanel extends JPanel
 {
+
+	final JComboBox< Interpolation > interpolationModes;
 
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Showing the different {@link Interpolation} modes.
-	 *
-	 * Note: This dialog component listens to changes comming from the
-	 * {@link ViewerPanel}.
-	 *
-	 * @param es
-	 *            the event-service
-	 * @param viewer
-	 *            the {@link ViewerPanel}
 	 */
-	public InterpolationModePanel( final ViewerPanel viewer )
+	public InterpolationModePanel()
 	{
-		JComboBox< String > interpolationModes = new JComboBox<>();
-		for ( Interpolation i : Interpolation.values() )
+		interpolationModes = new JComboBox<>();
+		for ( final Interpolation mode : Interpolation.values() )
 		{
-			interpolationModes.addItem( i.toString() );
+			interpolationModes.addItem( mode );
 		}
-		interpolationModes.addActionListener( new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed( ActionEvent ev )
-			{
-				if ( ev.getSource() == interpolationModes )
-				{
-					viewer.setInterpolation( Interpolation.valueOf( ( String ) interpolationModes.getSelectedItem() ) );
-				}
-			}
-		} );
 
 		this.setBackground( Color.WHITE );
 		this.setBorder( new TitledBorder( "Interpolation Mode" ) );
 		this.setLayout( new MigLayout( "fillx", "[grow]", "" ) );
 		this.add( interpolationModes, "growx" );
+	}
 
-		viewer.addInterpolationModeListener( new InterpolationModeListener()
-		{
+	/**
+	 * Add item listern to the component.
+	 *
+	 * @param itemListener
+	 */
+	public void addItemListener( final ItemListener itemListener )
+	{
+		interpolationModes.addItemListener( itemListener );
+	}
 
-			@Override
-			public void interpolationModeChanged( Interpolation mode )
-			{
-				interpolationModes.setSelectedItem( mode.toString() );
-			}
-		} );
+	/**
+	 *
+	 * @return Selected interpolation mode.
+	 */
+	public Interpolation getInterpolationMode()
+	{
+		return ( Interpolation ) interpolationModes.getSelectedItem();
+	}
 
-		// Default-Value
-		interpolationModes.setSelectedItem( Interpolation.NEARESTNEIGHBOR.toString() );
+	/**
+	 *
+	 * @param mode Set selected interpolation mode.
+	 */
+	public void setInterpolationModes( final Interpolation mode )
+	{
+		interpolationModes.setSelectedItem( mode );
 	}
 }

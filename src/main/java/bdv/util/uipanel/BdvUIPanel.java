@@ -164,7 +164,9 @@ public class BdvUIPanel extends BdvHandle
 		this.sourceChangeListeners().add( transformationPanel );
 		controls.addNewCard( new JLabel( "Navigation" ), true, transformationPanel );
 
-		interpolationPanel = new InterpolationModePanel( viewer );
+		interpolationPanel = new InterpolationModePanel();
+		interpolationPanel.addItemListener( l -> viewer.setInterpolation( interpolationPanel.getInterpolationMode() ) );
+		viewer.addInterpolationModeListener( mode -> interpolationPanel.setInterpolationModes( mode ) );
 		controls.addNewCard( new JLabel( "Interpolation" ), true, interpolationPanel );
 
 		addStuff( viewer, controls );
