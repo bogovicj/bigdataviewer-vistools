@@ -291,7 +291,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				setSelectedIndex( visGro.isGroupingEnabled() ? 1 : 0 );
 				break;
 			case Event.SOURCE_TO_GROUP_ASSIGNMENT_CHANGED:
-				// TODO?
+				updateGroupSourceComponent();
 				break;
 			case Event.GROUP_NAME_CHANGED:
 				groupsComboBox.repaint();
@@ -326,7 +326,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		sourcesComboBox.addItem( source );
 
 		sourceIndexHelper.addSourceToGroup( source, ALL_GROUP );
-		updateGroupSourceComponent();
 	}
 
 	/**
@@ -335,9 +334,11 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	@Override
 	public synchronized void sourceRemoved( final Source< ? > source )
 	{
+		sourceToConverterSetup.remove( source );
+		sourceNameBimap.remove( source );
+
 		intensitySlider.removeSource( source );
 		sourcesComboBox.removeItem( source );
-		sourceNameBimap.remove( source );
 	}
 
 	private void updateGroupVisibilityButton()
