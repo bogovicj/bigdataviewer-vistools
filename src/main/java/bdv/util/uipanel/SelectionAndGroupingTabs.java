@@ -717,29 +717,18 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		public Component getListCellRendererComponent( final JList< ? extends Source< ? > > list, final Source< ? > value, final int index,
 				final boolean isSelected, final boolean cellHasFocus )
 		{
-
 			if ( value != null )
 			{
 				final String uniqueName = sourceNameBimap.getName( value );
-				this.setText( uniqueName );
-				this.setToolTipText( uniqueName );
+				setText( uniqueName );
+				setToolTipText( uniqueName );
 				final boolean visible = sourceIndexHelper.isSourceActive( value );
-				this.setIcon( VisibilityIcons.small( visible ) );
+				setIcon( VisibilityIcons.small( visible ) );
 			}
 			else
-			{
-				this.setIcon( null );
-			}
+				setIcon( null );
 
-			if ( isSelected )
-			{
-				setForeground( Color.gray );
-			}
-			else
-			{
-				setForeground( FOREGROUND_COLOR );
-			}
-
+			setForeground( isSelected ? Color.gray : FOREGROUND_COLOR );
 			return this;
 		}
 	}
@@ -756,12 +745,15 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			if ( value != null )
 			{
 				if ( value.equals( NEW_GROUP ) )
-					this.setIcon( null );
+					setIcon( null );
 				else
-					this.setIcon( VisibilityIcons.small( value.isActive() ) );
-				this.setText( value.getName() );
-				this.setToolTipText( value.getName() );
+					setIcon( VisibilityIcons.small( value.isActive() ) );
+				setText( value.getName() );
+				setToolTipText( value.getName() );
 			}
+			else
+				setIcon( null );
+
 			setForeground( isSelected ? Color.gray : FOREGROUND_COLOR );
 			return this;
 		}
