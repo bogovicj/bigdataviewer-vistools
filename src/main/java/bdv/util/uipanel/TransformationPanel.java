@@ -98,6 +98,8 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 
 	private boolean isOverlay = false;
 
+	private final SourceIndexHelper sourceIndexHelper;
+
 	/**
 	 * Panel holding the controls of the viewer and individual transformation.
 	 *
@@ -123,6 +125,7 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 		} );
 		this.viewerPanel = viewerPanel;
 		visGro = this.viewerPanel.getVisibilityAndGrouping();
+		this.sourceIndexHelper = new SourceIndexHelper( visGro, viewerPanel );
 		setupPanel();
 
 		final JCheckBox translation = new JCheckBox( "Allow Translation", true );
@@ -206,13 +209,12 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 		final AffineTransform3D t = new AffineTransform3D();
 		if ( visGro.getDisplayMode() == DisplayMode.GROUP || visGro.getDisplayMode() == DisplayMode.FUSEDGROUP )
 		{
-			final SourceGroup currentGroup = viewerPanel.getState().getSourceGroups()
-					.get( viewerPanel.getState().getCurrentGroup() );
+			final SourceGroup currentGroup = sourceIndexHelper.getCurrentGroup();
 			final List< SourceState< ? > > sources = viewerPanel.getState().getSources();
 			for ( int id : currentGroup.getSourceIds() )
 			{
 				final Source< ? > s = sources.get( id ).getSpimSource();
-				if ( TransformedSource.class.isInstance( s ) )
+				if ( s instanceof TransformedSource )
 				{
 					( ( TransformedSource< ? > ) s ).getFixedTransform( t );
 				}
@@ -221,16 +223,15 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 		}
 		else
 		{
-			final int currentSource = viewerPanel.getState().getCurrentSource();
-			if ( currentSource > -1 )
+			final Source< ? > currentSource = sourceIndexHelper.getCurrentSource();
+			if ( currentSource != null )
 			{
-				final Source< ? > source = viewerPanel.getState().getSources().get( currentSource ).getSpimSource();
-				if ( TransformedSource.class.isInstance( source ) )
+				if ( currentSource instanceof TransformedSource )
 				{
-					( ( TransformedSource< ? > ) source ).getFixedTransform( t );
+					( ( TransformedSource< ? > ) currentSource ).getFixedTransform( t );
 				}
 				transformationLookup
-						.put( viewerPanel.getState().getSources().get( currentSource ).getSpimSource(), t );
+						.put( currentSource, t );
 			}
 
 		}
@@ -239,15 +240,13 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 	/**
 	 * Extract the transformation of the source with sourceIdx.
 	 *
-	 * @param sourceIdx
-	 *            index of the source
+	 * @param source
 	 * @return transformation
 	 */
-	private AffineTransform3D getInitialTransformation( final int sourceIdx )
+	private AffineTransform3D getInitialTransformation( final Source< ? > source )
 	{
 		final AffineTransform3D t = new AffineTransform3D();
-		final Source< ? > source = viewerPanel.getState().getSources().get( sourceIdx ).getSpimSource();
-		if ( TransformedSource.class.isInstance( source ) )
+		if ( source instanceof TransformedSource )
 		{
 			( ( TransformedSource< ? > ) source ).getFixedTransform( t );
 		}
@@ -274,11 +273,10 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 					}
 					else
 					{
-						final int numSources = viewerPanel.getState().numSources();
-						for ( int i = 0; i < numSources; ++i )
+						for ( SourceState< ? > sourceState : viewerPanel.getState().getSources() )
 						{
-							final Source< ? > source = viewerPanel.getState().getSources().get( i ).getSpimSource();
-							if ( TransformedSource.class.isInstance( source ) )
+							final Source< ? > source = sourceState.getSpimSource();
+							if ( source instanceof TransformedSource )
 							{
 								( ( TransformedSource< ? > ) source ).setFixedTransform( new AffineTransform3D() );
 								( ( TransformedSource< ? > ) source ).setIncrementalTransform( new AffineTransform3D() );
@@ -511,7 +509,7 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 	public void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
 	{
 		transformationLookup.put( source,
-				getInitialTransformation( viewerPanel.getVisibilityAndGrouping().getCurrentSource() ) );
+				getInitialTransformation( source ) );
 	}
 
 	@Override
