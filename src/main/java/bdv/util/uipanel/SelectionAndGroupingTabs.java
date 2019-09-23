@@ -59,6 +59,8 @@ import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -130,11 +132,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	private JLabel sourceVisibilityLabel;
 
 	/**
-	 * Only display selected source.
-	 */
-	private boolean singleSourceMode; // TODO: still needed?
-
-	/**
 	 * Single source mode checkbox.
 	 */
 	private JCheckBox singleSourceModeCheckbox;
@@ -184,11 +181,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 * The min-max range slider-component.
 	 */
 	private IntensitySlider intensitySlider;
-
-	/**
-	 * Group mode active.
-	 */
-	private boolean groupMode = false;
 
 	/**
 	 * Bdv visiblity and grouping.
@@ -253,41 +245,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		this.setForeground( FOREGROUND_COLOR );
 
 		this.addTab( "Source Control", createSourceControl() );
-
 		this.addTab( "Group Control", createGroupControl() );
-
-		this.addChangeListener( e -> {
-			final DisplayMode displayMode = viewerPanel.getState().getDisplayMode();
-			if ( isGroupTabActive() )
-			{
-				if ( singleSourceMode )
-				{
-					if ( displayMode != DisplayMode.GROUP )
-						viewerPanel.setDisplayMode( DisplayMode.GROUP );
-				}
-				else
-				{
-					if ( displayMode != DisplayMode.FUSEDGROUP )
-						viewerPanel.setDisplayMode( DisplayMode.FUSEDGROUP );
-				}
-				groupMode = true;
-			}
-			else
-			{
-				sourcesComboBox.setSelectedItem( sourceIndexHelper.getCurrentSource() );
-				if ( singleSourceMode )
-				{
-					if ( displayMode != DisplayMode.SINGLE )
-						viewerPanel.setDisplayMode( DisplayMode.SINGLE );
-				}
-				else
-				{
-					if ( displayMode != DisplayMode.FUSED )
-						viewerPanel.setDisplayMode( DisplayMode.FUSED );
-				}
-				groupMode = false;
-			}
-		} );
+		this.addChangeListener( e -> visGro.setGroupingEnabled( isGroupTabActive() ) );
 	}
 
 	/**
@@ -310,100 +269,48 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			}
 		} );
 
-		visGro.addUpdateListener( e -> /* TODO: still necessary? */ SwingUtilities.invokeLater( () -> {
+		visGro.addUpdateListener( e -> {
 			switch( e.id )
 			{
 			case Event.CURRENT_SOURCE_CHANGED:
 				sourcesComboBox.setSelectedItem( sourceIndexHelper.getCurrentSource() );
+				updateSourceVisibilityButton();
 				break;
 			case Event.CURRENT_GROUP_CHANGED:
 				groupsComboBox.setSelectedItem( sourceIndexHelper.getCurrentGroup() );
+				updateGroupVisibilityButton();
 				break;
 			case Event.SOURCE_ACTVITY_CHANGED:
 				sourcesComboBox.repaint();
-				updateVisibilityIcons(); // TODO: split?
+				updateSourceVisibilityButton();
 				break;
 			case Event.GROUP_ACTIVITY_CHANGED:
 				groupsComboBox.repaint();
-				updateVisibilityIcons(); // TODO: split?
+				updateGroupVisibilityButton();
 				break;
 			case Event.DISPLAY_MODE_CHANGED:
-				// TODO see below
+				singleGroupModeCheckbox.setSelected( !visGro.isFusedEnabled() );
+				singleSourceModeCheckbox.setSelected( !visGro.isFusedEnabled() );
+				setSelectedIndex( visGro.isGroupingEnabled() ? 1 : 0 );
 				break;
 			case Event.SOURCE_TO_GROUP_ASSIGNMENT_CHANGED:
-				// TODO
+				// TODO?
 				break;
 			case Event.GROUP_NAME_CHANGED:
 				groupsComboBox.repaint();
 				break;
 			case Event.VISIBILITY_CHANGED:
-				// TODO
+				// TODO?
 				break;
 			case Event.NUM_SOURCES_CHANGED:
-				// TODO
+				// TODO?
 				break;
 			case Event.NUM_GROUPS_CHANGED:
-				// TODO
+				// TODO?
 				break;
 			default:
 			}
-
-			if ( e.id == Event.DISPLAY_MODE_CHANGED )
-			{
-//				switch ( visGro.getDisplayMode() )
-//				{
-//				case SINGLE:
-//					break;
-//				case GROUP:
-//					break;
-//				case FUSED:
-//					break;
-//				case FUSEDGROUP:
-//					break;
-//				}
-				final DisplayMode mode = visGro.getDisplayMode();
-				if ( mode.equals( DisplayMode.FUSEDGROUP ) )
-				{
-					singleGroupModeCheckbox.setSelected( false );
-					singleSourceModeCheckbox.setSelected( false );
-					singleSourceMode = false;
-
-					updateVisibilityIcons();
-
-					setSelectedIndex( 1 );
-				}
-				else if ( mode.equals( DisplayMode.FUSED ) )
-				{
-					singleGroupModeCheckbox.setSelected( false );
-					singleSourceModeCheckbox.setSelected( false );
-					singleSourceMode = false;
-
-					updateVisibilityIcons();
-
-					setSelectedIndex( 0 );
-				}
-				else if ( mode.equals( DisplayMode.GROUP ) )
-				{
-					singleGroupModeCheckbox.setSelected( true );
-					singleSourceModeCheckbox.setSelected( true );
-					singleSourceMode = true;
-
-					updateVisibilityIcons();
-
-					setSelectedIndex( 1 );
-				}
-				else
-				{
-					singleGroupModeCheckbox.setSelected( true );
-					singleSourceModeCheckbox.setSelected( true );
-					singleSourceMode = true;
-
-					updateVisibilityIcons();
-
-					setSelectedIndex( 0 );
-				}
-			}
-		} ) );
+		} );
 	}
 
 	/**
@@ -436,9 +343,13 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		sourceNameBimap.remove( source );
 	}
 
-	private void updateVisibilityIcons()
+	private void updateGroupVisibilityButton()
 	{
 		groupVisibilityLabel.setIcon( VisibilityIcons.big( sourceIndexHelper.getCurrentGroup().isActive() ) );
+	}
+
+	private void updateSourceVisibilityButton()
+	{
 		sourceVisibilityLabel.setIcon( VisibilityIcons.big( sourceIndexHelper.isSourceActive( sourceIndexHelper.getCurrentSource() ) ) );
 	}
 
@@ -528,6 +439,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			{
 				final Source< ? > source = ( Source< ? > ) sourcesComboBox.getSelectedItem();
 				sourcesComboBox.setToolTipText( sourceNameBimap.getName( source ) );
+				// TODO REMOVE
 				notifySelectionChangeListeners( source instanceof PlaceHolderSource );
 				if ( source != null )
 				{
@@ -560,10 +472,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		singleSourceModeCheckbox = new JCheckBox( "Single Source Mode" );
 		singleSourceModeCheckbox.setBackground( BACKGROUND_COLOR );
 		singleSourceModeCheckbox.setToolTipText( "Display only the selected source." );
-		singleSourceModeCheckbox.addActionListener( e -> {
-			singleSourceMode = singleSourceModeCheckbox.isSelected();
-			visGro.setFusedEnabled( !singleSourceMode );
-		} );
+		singleSourceModeCheckbox.addActionListener( e ->
+				visGro.setFusedEnabled( !singleSourceModeCheckbox.isSelected() ) );
 
 		// add range slider for intensity boundaries.
 		intensitySlider = new IntensitySlider( setupAssignments, viewerPanel );
@@ -762,11 +672,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		singleGroupModeCheckbox = new JCheckBox( "Single Group Mode" );
 		singleGroupModeCheckbox.setBackground( BACKGROUND_COLOR );
 		singleGroupModeCheckbox.setToolTipText( "Display only the currently selected group." );
-		singleGroupModeCheckbox.addActionListener( e -> {
-			singleSourceModeCheckbox.setSelected( singleGroupModeCheckbox.isSelected() );
-			singleSourceMode = singleSourceModeCheckbox.isSelected();
-			visGro.setFusedEnabled( !singleSourceMode );
-		} );
+		singleGroupModeCheckbox.addActionListener( e ->
+				visGro.setFusedEnabled( !singleGroupModeCheckbox.isSelected() ) );
 
 		p.add( groupsComboBox, "growx" );
 		p.add( groupVisibilityLabel );
@@ -900,16 +807,19 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	// TODO: SelectionChangeListener are notified when sourcesComboBox selection is changed.
 	//       This is probably not needed, could listen to VisibilityAndGrouping instead.
 
+	// TODO REMOVE
 	public interface SelectionChangeListener
 	{
 		void selectionChanged( final boolean isOverlay );
 	}
 
+	// TODO REMOVE
 	public Listeners< SelectionChangeListener > selectionChangeListeners()
 	{
 		return selectionChangeListeners;
 	}
 
+	// TODO REMOVE
 	private void notifySelectionChangeListeners( final boolean isOverlay )
 	{
 		selectionChangeListeners.list.forEach( l -> l.selectionChanged( isOverlay ) );
