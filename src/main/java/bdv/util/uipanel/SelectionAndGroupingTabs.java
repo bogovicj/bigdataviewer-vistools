@@ -532,7 +532,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				{
 					visGro.setCurrentSource( source );
 					intensitySlider.setSource( source );
-					informationPanel.setType( source.getType().getClass().getSimpleName() );
+					if (source instanceof PlaceHolderSource )
+						informationPanel.setType( "N/A" );
+					else
+						informationPanel.setType( source.getType().getClass().getSimpleName() );
 
 					final Color color = getColor( sourceToConverterSetup.get( source ) );
 					colorButton.setIcon( colorIcon( color ) );
