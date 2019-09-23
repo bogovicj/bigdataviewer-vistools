@@ -56,11 +56,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.ListCellRenderer;
 import javax.swing.LookAndFeel;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -76,7 +74,6 @@ import bdv.tools.brightness.SetupAssignments;
 import bdv.tools.transformation.ManualTransformActiveListener;
 import bdv.tools.transformation.ManualTransformationEditor;
 import bdv.util.BdvHandle;
-import bdv.viewer.DisplayMode;
 import bdv.viewer.Source;
 import bdv.viewer.ViewerPanel;
 import bdv.viewer.VisibilityAndGrouping;
@@ -129,7 +126,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Label representing the visibility state of the source.
 	 */
-	private JLabel sourceVisibilityLabel;
+	private JCheckBox sourceVisibilityCheckbox;
 
 	/**
 	 * Single source mode checkbox.
@@ -139,7 +136,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	/**
 	 * Label representing the visibility state of the group.
 	 */
-	private JLabel groupVisibilityLabel;
+	private JCheckBox groupVisibilityCheckbox;
 
 	/**
 	 * Single groupp mode checkbox.
@@ -345,12 +342,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 
 	private void updateGroupVisibilityButton()
 	{
-		groupVisibilityLabel.setIcon( VisibilityIcons.big( sourceIndexHelper.getCurrentGroup().isActive() ) );
+		groupVisibilityCheckbox.setSelected( sourceIndexHelper.getCurrentGroup().isActive() );
 	}
 
 	private void updateSourceVisibilityButton()
 	{
-		sourceVisibilityLabel.setIcon( VisibilityIcons.big( sourceIndexHelper.isSourceActive( sourceIndexHelper.getCurrentSource() ) ) );
+		sourceVisibilityCheckbox.setSelected( sourceIndexHelper.isSourceActive( sourceIndexHelper.getCurrentSource() ) );
 	}
 
 	/**
@@ -400,22 +397,14 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		p.add( sourcesComboBox, "growx" );
 
 		// source visibility icon (eye icon)
-		sourceVisibilityLabel = new JLabel( VisibilityIcons.big( true ) );
-		sourceVisibilityLabel.setBackground( BACKGROUND_COLOR );
-		sourceVisibilityLabel.setToolTipText( "Show source in fused mode." );
-		sourceVisibilityLabel.addMouseListener( new MouseAdapter()
-		{
-			@Override
-			public void mouseReleased( final MouseEvent e )
-			{
-				final Source< ? > source = ( Source< ? > ) sourcesComboBox.getSelectedItem();
-
-				final boolean active = !sourceIndexHelper.isSourceActive( source );
-				visGro.setSourceActive( source, active );
-
-				sourceVisibilityLabel.setIcon( VisibilityIcons.big( active ) );
-				sourcesComboBox.repaint();
-			}
+		sourceVisibilityCheckbox = new JCheckBox( VisibilityIcons.big( false ) );
+		sourceVisibilityCheckbox.setSelectedIcon( VisibilityIcons.big( true ) );
+		sourceVisibilityCheckbox.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
+		sourceVisibilityCheckbox.setToolTipText( "Show source in fused mode." );
+		sourceVisibilityCheckbox.addActionListener( e -> {
+			final Source< ? > source = sourceIndexHelper.getCurrentSource();
+			final boolean active = !sourceIndexHelper.isSourceActive( source );
+			visGro.setSourceActive( source, active );
 		} );
 
 		// color choser component
@@ -455,13 +444,12 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 					colorButton.setEnabled( color != null );
 
 					final boolean active = sourceIndexHelper.isSourceActive( source );
-					sourceVisibilityLabel.setIcon( VisibilityIcons.big( active ) );
 				}
 			}
 		} );
 
 		p.add( colorButton );
-		p.add( sourceVisibilityLabel, "wrap" );
+		p.add( sourceVisibilityCheckbox, "wrap" );
 
 		// add information panel
 		informationPanel = new InformationPanel();
@@ -611,20 +599,14 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		selection.setBottomComponent( scrollPaneBottom );
 
 		// label displaying the visibility state of the current group (eye icon)
-		groupVisibilityLabel = new JLabel( VisibilityIcons.big( true ) );
-		groupVisibilityLabel.setBackground( BACKGROUND_COLOR );
-		groupVisibilityLabel.setBorder( null );
-		groupVisibilityLabel.setToolTipText( "Show group in fused-group mode." );
-		groupVisibilityLabel.addMouseListener( new MouseAdapter()
-		{
-			@Override
-			public void mouseReleased( final MouseEvent e )
-			{
-				final SourceGroup selected = ( SourceGroup ) groupsComboBox.getSelectedItem();
-				final boolean groupActiveState = !selected.isActive();
-				groupVisibilityLabel.setIcon( VisibilityIcons.big( groupActiveState ) );
-				sourceIndexHelper.setGroupActive( selected, groupActiveState );
-			}
+		groupVisibilityCheckbox = new JCheckBox( VisibilityIcons.big( false ) );
+		groupVisibilityCheckbox.setSelectedIcon( VisibilityIcons.big( true ) );
+		groupVisibilityCheckbox.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
+		groupVisibilityCheckbox.setToolTipText( "Show group in fused-group mode." );
+		groupVisibilityCheckbox.addActionListener( e -> {
+			final SourceGroup group = sourceIndexHelper.getCurrentGroup();
+			final boolean active = !group.isActive();
+			sourceIndexHelper.setGroupActive( group, active );
 		} );
 
 		// Action listener handling the current group and updating selected and
@@ -661,7 +643,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				}
 
 				sourceIndexHelper.setCurrentGroup( selected );
-				groupVisibilityLabel.setIcon( VisibilityIcons.big( selected.isActive() ) );
 				updateGroupSourceComponent();
 				removeGroup.setEnabled( !selected.equals( ALL_GROUP ) );
 			}
@@ -676,7 +657,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				visGro.setFusedEnabled( !singleGroupModeCheckbox.isSelected() ) );
 
 		p.add( groupsComboBox, "growx" );
-		p.add( groupVisibilityLabel );
+		p.add( groupVisibilityCheckbox );
 		p.add( removeGroup, "growx, wrap" );
 		p.add( selection, "span, growx, wrap" );
 		p.add( singleGroupModeCheckbox, "span, growx" );
