@@ -29,6 +29,7 @@
 package bdv.util.uipanel;
 
 import bdv.tools.brightness.ColorIcon;
+import bdv.util.PlaceHolderSource;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -527,7 +528,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			{
 				final Source< ? > source = ( Source< ? > ) sourcesComboBox.getSelectedItem();
 				sourcesComboBox.setToolTipText( sourceNameBimap.getName( source ) );
-				notifySelectionChangeListeners( false );
+				notifySelectionChangeListeners( source instanceof PlaceHolderSource );
 				if ( source != null )
 				{
 					visGro.setCurrentSource( source );
