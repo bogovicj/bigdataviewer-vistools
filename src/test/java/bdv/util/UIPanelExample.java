@@ -40,11 +40,11 @@ public class UIPanelExample
 		frame.setVisible( true );
 
 		final BdvOverlay overlay = createBdvOverlay( random );
+//		BdvFunctions.showOverlay( overlay, "overlay", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XY ) );
 
-		BdvFunctions.showOverlay( overlay, "overlay", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XY ) );
-
-		BdvFunctions.show( img, "img", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XYC ) );
-		BdvFunctions.show( img_float, "test", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XY ) );
+//		BdvFunctions.show( img, "img", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XYC ) );
+		for (int i = 0; i < 140; i++)
+			BdvFunctions.show( img_float, "test", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XY ) );
 	}
 
 	private static BdvOverlay createBdvOverlay( final Random random )
