@@ -71,7 +71,6 @@ import org.scijava.listeners.Listeners;
 
 import bdv.tools.brightness.ConverterSetup;
 import bdv.tools.brightness.SetupAssignments;
-import bdv.tools.transformation.ManualTransformActiveListener;
 import bdv.tools.transformation.ManualTransformationEditor;
 import bdv.util.BdvHandle;
 import bdv.viewer.Source;
@@ -254,16 +253,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 */
 	private void addListeners( final ManualTransformationEditor manualTransformationEditor )
 	{
-
-		manualTransformationEditor.addManualTransformActiveListener( new ManualTransformActiveListener()
-		{
-
-			@Override
-			public void manualTransformActiveChanged( final boolean enabled )
-			{
-				setEnableSelectionAndGrouping( !enabled );
-				manualTransformationActive = enabled;
-			}
+		manualTransformationEditor.manualTransformActiveListeners().add( enabled -> {
+			setEnableSelectionAndGrouping( !enabled );
+			manualTransformationActive = enabled;
 		} );
 
 		visGro.addUpdateListener( e -> {

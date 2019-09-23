@@ -79,20 +79,20 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 	/**
 	 * Reset transformation button.
 	 */
-	private JButton reset;
+	private final JButton reset;
 
 	/**
 	 * Enable individual transformation of sources/groups.
 	 */
 	private JCheckBox individualTransformation;
 
-	private TriggerBehaviourBindings triggerBindings;
+	private final TriggerBehaviourBindings triggerBindings;
 
-	private ManualTransformationEditor manualTransformationEditor;
+	private final ManualTransformationEditor manualTransformationEditor;
 
-	private ViewerPanel viewerPanel;
+	private final ViewerPanel viewerPanel;
 
-	private VisibilityAndGrouping visGro;
+	private final VisibilityAndGrouping visGro;
 
 	private final Map<Source< ? >, AffineTransform3D> transformationLookup = new HashMap<>();
 
@@ -110,17 +110,11 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 
 		this.triggerBindings = triggerBindings;
 		this.manualTransformationEditor = manualTransformationEditor;
-		manualTransformationEditor.addManualTransformActiveListener( new ManualTransformActiveListener()
-		{
-
-			@Override
-			public void manualTransformActiveChanged( final boolean arg0 )
+		manualTransformationEditor.manualTransformActiveListeners().add( active -> {
+			individualTransformation.setSelected( active );
+			if ( !active )
 			{
-				individualTransformation.setSelected( arg0 );
-				if ( !arg0 )
-				{
-					saveTransformation();
-				}
+				saveTransformation();
 			}
 		} );
 		this.viewerPanel = viewerPanel;
@@ -139,25 +133,9 @@ public class TransformationPanel extends JPanel implements SourceChangeListener,
 		individualTransformation = new JCheckBox( "Manipulate Initial Transformation" );
 		setupManualTransformationCheckBox();
 
-		this.manualTransformationEditor.addManualTransformActiveListener( new ManualTransformActiveListener()
-		{
+		this.manualTransformationEditor.manualTransformActiveListeners().add( this::manualTransformation );
 
-			@Override
-			public void manualTransformActiveChanged( boolean active )
-			{
-				manualTransformation( active );
-			}
-		} );
-
-		this.manualTransformationEditor.addManualTransformActiveListener( new ManualTransformActiveListener()
-		{
-
-			@Override
-			public void manualTransformActiveChanged( boolean active )
-			{
-				individualTransformation.setSelected( active );
-			}
-		} );
+		this.manualTransformationEditor.manualTransformActiveListeners().add( active -> individualTransformation.setSelected( active ) );
 
 		translation.doClick();
 		rotation.doClick();
