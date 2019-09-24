@@ -28,8 +28,6 @@
  */
 package bdv.util.uipanel;
 
-import bdv.tools.brightness.ColorIcon;
-import bdv.util.PlaceHolderSource;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -38,15 +36,12 @@ import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -65,7 +60,6 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 
-import net.imglib2.type.numeric.ARGBType;
 import net.miginfocom.swing.MigLayout;
 
 import org.scijava.listeners.Listeners;
@@ -82,9 +76,7 @@ import bdv.viewer.state.SourceGroup;
 
 import static bdv.util.uipanel.ColorsAndIcons.BACKGROUND_COLOR;
 import static bdv.util.uipanel.ColorsAndIcons.FOREGROUND_COLOR;
-import static bdv.util.uipanel.ColorsAndIcons.notVisibleIcon;
 import static bdv.util.uipanel.ColorsAndIcons.smallVisibilityIcon;
-import static bdv.util.uipanel.ColorsAndIcons.visibleIcon;
 
 /**
  * The tabbed pane with all BDV-UI components.
@@ -163,7 +155,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 */
 	private final Listeners.List< SelectionChangeListener > selectionChangeListeners = new Listeners.SynchronizedList<>();
 
-	private SourceSettingsTab sourceControlTab;
+	private SourceSettingsPanel sourceControlTab;
 
 	private JPanel groupControlTab;
 
@@ -208,7 +200,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		this.setBackground( BACKGROUND_COLOR );
 		this.setForeground( FOREGROUND_COLOR );
 
-		sourceControlTab = new SourceSettingsTab( visGro, sourceIndexHelper, sourceNameBimap );
+		sourceControlTab = new SourceSettingsPanel( visGro, sourceIndexHelper, sourceNameBimap );
 		groupControlTab = createGroupControl();
 		this.addTab( "Source Control", sourceControlTab );
 		this.addTab( "Group Control", groupControlTab );
@@ -626,241 +618,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		selectionChangeListeners.list.forEach( l -> l.selectionChanged( isOverlay ) );
 	}
 
-
-
 	// ============
 
-	public static class SourceSettingsTab extends JPanel
-	{
-		/**
-		 * Bdv visiblity and grouping.
-		 */
-		private final VisibilityAndGrouping visGro;
-
-		private final SourceIndexHelper sourceIndexHelper;
-
-		private final SourceNameBimap sourceNameBimap;
-
-		private final Map< Source< ? >, ConverterSetup > sourceToConverterSetup = new HashMap<>();
-
-		/**
-		 * Combobox displaying all current sources.
-		 */
-		private final JComboBox< Source< ? > > sourcesComboBox;
-
-		/**
-		 * Label representing the visibility state of the source.
-		 */
-		private final JCheckBox sourceVisibilityCheckbox;
-
-		/**
-		 * The information panel, showing information about the selected source.
-		 */
-		private final InformationPanel informationPanel;
-
-		/**
-		 * The min-max range slider-component.
-		 */
-		private final IntensitySlider intensitySlider;
-
-		/**
-		 * Single source mode checkbox.
-		 */
-		private final JCheckBox singleSourceModeCheckbox;
-
-		public SourceSettingsTab(final VisibilityAndGrouping visGro, final SourceIndexHelper sourceIndexHelper, final SourceNameBimap sourceNameBimap )
-		{
-			super( new MigLayout( "fillx", "[grow][][]", "[][]push[][]" ) );
-			this.visGro = visGro;
-			this.sourceIndexHelper = sourceIndexHelper;
-			this.sourceNameBimap = sourceNameBimap;
-
-			setBackground( BACKGROUND_COLOR );
-
-			// source selection combobox
-			sourcesComboBox = new JComboBox<>();
-			sourcesComboBox.setMaximumSize( new Dimension( 270, 30 ) );
-			sourcesComboBox.setRenderer( new SourceComboBoxRenderer() );
-			sourcesComboBox.setBackground( BACKGROUND_COLOR );
-			add( sourcesComboBox, "growx" );
-
-			// source visibility icon (eye icon)
-			sourceVisibilityCheckbox = new JCheckBox( notVisibleIcon );
-			sourceVisibilityCheckbox.setSelectedIcon( visibleIcon );
-			sourceVisibilityCheckbox.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
-			sourceVisibilityCheckbox.setToolTipText( "Show source in fused mode." );
-			sourceVisibilityCheckbox.addActionListener( e -> {
-				final Source< ? > source = sourceIndexHelper.getCurrentSource();
-				final boolean active = !sourceIndexHelper.isSourceActive( source );
-				visGro.setSourceActive( source, active );
-			} );
-
-			// color choser component
-			final JButton colorButton = new JButton();
-			colorButton.setPreferredSize( new Dimension( 15, 15 ) );
-			colorButton.setIcon( colorIcon( BACKGROUND_COLOR ) );
-			colorButton.addActionListener( e -> {
-				Color newColor = null;
-				final ConverterSetup setup = sourceToConverterSetup.get( sourceIndexHelper.getCurrentSource() );
-				newColor = JColorChooser.showDialog( null, "Select Source Color", getColor( setup ) );
-				if ( newColor != null )
-				{
-					colorButton.setIcon( colorIcon( newColor ) );
-					setColor( setup, newColor );
-				}
-			} );
-
-			add( colorButton );
-			add( sourceVisibilityCheckbox, "wrap" );
-
-			// add information panel
-			informationPanel = new InformationPanel();
-			add( informationPanel, "span, growx, wrap" );
-
-			// single source mode checkbox to toggle between fused mode and single
-			// source mode
-			singleSourceModeCheckbox = new JCheckBox( "Single Source Mode" );
-			singleSourceModeCheckbox.setBackground( BACKGROUND_COLOR );
-			singleSourceModeCheckbox.setToolTipText( "Display only the selected source." );
-			singleSourceModeCheckbox.addActionListener( e ->
-					visGro.setFusedEnabled( !singleSourceModeCheckbox.isSelected() ) );
-
-			// add range slider for intensity boundaries.
-			intensitySlider = new IntensitySlider();
-			final RangeSliderSpinnerPanel intensitySliderPanel = intensitySlider.getPanel();
-			intensitySliderPanel.setPreferredSize( new Dimension( 20, 20 ) );
-			add( intensitySliderPanel, "span, growx, wrap" );
-			add( singleSourceModeCheckbox, "span, growx" );
-
-			// -- set up listeners --
-
-			sourcesComboBox.addItemListener( e -> {
-				if ( e.getStateChange() == ItemEvent.SELECTED )
-				{
-					final Source< ? > source = ( Source< ? > ) sourcesComboBox.getSelectedItem();
-					sourcesComboBox.setToolTipText( sourceNameBimap.getName( source ) );
-					// TODO REMOVE
-//					notifySelectionChangeListeners( source instanceof PlaceHolderSource );
-					if ( source != null )
-					{
-						visGro.setCurrentSource( source );
-						intensitySlider.setSource( source );
-						if ( source instanceof PlaceHolderSource )
-							informationPanel.setType( "N/A" );
-						else
-							informationPanel.setType( source.getType().getClass().getSimpleName() );
-
-						final Color color = getColor( sourceToConverterSetup.get( source ) );
-						colorButton.setIcon( colorIcon( color ) );
-						colorButton.setEnabled( color != null );
-
-						final boolean active = sourceIndexHelper.isSourceActive( source );
-					}
-				}
-			} );
-
-
-			// -- for sources tab --
-			visGro.addUpdateListener( e -> {
-				switch( e.id )
-				{
-				case Event.CURRENT_SOURCE_CHANGED:
-					sourcesComboBox.setSelectedItem( sourceIndexHelper.getCurrentSource() );
-					updateSourceVisibilityButton();
-					break;
-				case Event.SOURCE_ACTVITY_CHANGED:
-					sourcesComboBox.repaint();
-					updateSourceVisibilityButton();
-					break;
-				case Event.DISPLAY_MODE_CHANGED:
-					singleSourceModeCheckbox.setSelected( !visGro.isFusedEnabled() );
-					break;
-				case Event.NUM_SOURCES_CHANGED:
-					// TODO: if bdv core would provide a Map<Source,ConverterSetup> or similar, this event could replace the sourceAdded() listener?
-					break;
-				}
-			} );
-
-
-		}
-
-		public void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
-		{
-			sourceToConverterSetup.put( source, converterSetup );
-			intensitySlider.addSource( source, converterSetup );
-			sourcesComboBox.addItem( source );
-		}
-
-		public void sourceRemoved( final Source< ? > source )
-		{
-			sourceToConverterSetup.remove( source );
-			intensitySlider.removeSource( source );
-			sourcesComboBox.removeItem( source );
-		}
-
-		/**
-		 * Sets whether or not this panel and its children are enabled.
-		 *
-		 * @param enabled
-		 *        {@code true} if this panel should be enabled, {@code false} if it should be disabled.
-		 */
-		@Override
-		public void setEnabled( final boolean enabled )
-		{
-			sourcesComboBox.setEnabled( enabled );
-			singleSourceModeCheckbox.setEnabled( enabled );
-//			intensitySlider.setEnabled( enabled ); // TODO
-			super.setEnabled( enabled );
-		}
-
-		private void updateSourceVisibilityButton()
-		{
-			sourceVisibilityCheckbox.setSelected( sourceIndexHelper.isSourceActive( sourceIndexHelper.getCurrentSource() ) );
-		}
-
-		// -- Colors --
-
-		private static Color getColor( final ConverterSetup setup )
-		{
-			return setup.supportsColor() ? new Color( setup.getColor().get() ) : null;
-		}
-
-		private static void setColor( final ConverterSetup setup, final Color color )
-		{
-			setup.setColor( new ARGBType( color.getRGB() | 0xff000000 ) );
-		}
-
-		private ColorIcon colorIcon( Color color )
-		{
-			return new ColorIcon( color, 24, 16, 5, 5 );
-		}
-
-		/**
-		 * A combobox renderer displaying the visibility state of the sources.
-		 */
-		class SourceComboBoxRenderer extends JLabel implements ListCellRenderer< Source< ? > >
-		{
-			private static final long serialVersionUID = 1L;
-
-			@Override
-
-			public Component getListCellRendererComponent( final JList< ? extends Source< ? > > list, final Source< ? > value, final int index,
-					final boolean isSelected, final boolean cellHasFocus )
-			{
-				if ( value != null )
-				{
-					final String uniqueName = sourceNameBimap.getName( value );
-					setText( uniqueName );
-					setToolTipText( uniqueName );
-					final boolean visible = sourceIndexHelper.isSourceActive( value );
-					setIcon( smallVisibilityIcon( visible ) );
-				}
-				else
-					setIcon( null );
-
-				setForeground( isSelected ? Color.gray : FOREGROUND_COLOR );
-				return this;
-			}
-		}
-	}
 }
