@@ -171,19 +171,4 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		sourceNameBimap.remove( source );
 		sourceControlTab.sourceRemoved( source );
 	}
-
-	// TODO remove
-	private final Listeners.List< SelectionChangeListener > selectionChangeListeners = new Listeners.SynchronizedList<>();
-
-	// TODO REMOVE
-	public interface SelectionChangeListener
-	{
-		void selectionChanged( final boolean isOverlay );
-	}
-
-	// TODO REMOVE
-	public Listeners< SelectionChangeListener > selectionChangeListeners()
-	{
-		return selectionChangeListeners;
-	}
 }
