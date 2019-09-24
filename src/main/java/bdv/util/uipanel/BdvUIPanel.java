@@ -9,7 +9,6 @@ import java.awt.Graphics;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -34,12 +33,10 @@ import bdv.cache.CacheControl.CacheControls;
 import bdv.tools.HelpDialog;
 import bdv.tools.bookmarks.Bookmarks;
 import bdv.tools.bookmarks.BookmarksEditor;
-import bdv.tools.brightness.ConverterSetup;
 import bdv.tools.brightness.SetupAssignments;
 import bdv.tools.transformation.ManualTransformationEditor;
 import bdv.viewer.DisplayMode;
 import bdv.viewer.NavigationActions;
-import bdv.viewer.SourceAndConverter;
 import bdv.viewer.ViewerOptions;
 import bdv.viewer.ViewerPanel;
 import bdv.viewer.ViewerPanel.AlignPlane;
@@ -159,9 +156,9 @@ public class BdvUIPanel extends BdvHandle
 
 		controls.addNewCard( new JLabel( "Selection" ), true, selectionAndGroupingPanel );
 
-		transformationPanel = new TransformationPanel( triggerbindings, manualTransformationEditor, viewer );
-		selectionAndGroupingPanel.selectionChangeListeners().add( transformationPanel );
-		this.sourceChangeListeners().add( transformationPanel );
+		final TransformationModel transformationModel = new TransformationModel( viewer, triggerbindings, manualTransformationEditor );
+		this.sourceChangeListeners().add( transformationModel );
+		transformationPanel = new TransformationPanel( transformationModel );
 		controls.addNewCard( new JLabel( "Navigation" ), true, transformationPanel );
 
 		interpolationPanel = new InterpolationModePanel();
