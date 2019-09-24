@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -164,11 +165,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	private JPanel remainingSources;
 
 	/**
-	 * Activity state of manual transformation.
-	 */
-	private boolean manualTransformationActive;
-
-	/**
 	 * The information panel, showing information about the selected source.
 	 */
 	private InformationPanel informationPanel;
@@ -262,7 +258,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			this.setEnabled( !active );
 			setEnabledSourcesTab( !active );
 			setEnabledGroupsTab( !active );
-			manualTransformationActive = active;
 		} );
 
 		// -- for tab pane --
@@ -508,9 +503,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		viewerPanel.getState().getSources().forEach( sourceState -> {
 			final Source< ? > source = sourceState.getSpimSource();
 			if ( getCurrentGroup( viewerPanel ).getSourceIds().contains( sourceIndexHelper.getSourceIndex( source ) ) )
-				selectedSources.add( createEntry( source ), "growx, wrap" );
+				selectedSources.add( createEntry( source, selectedSources::isEnabled ), "growx, wrap" );
 			else
-				remainingSources.add( createEntry( source ), "growx, wrap" );
+				remainingSources.add( createEntry( source, remainingSources::isEnabled ), "growx, wrap" );
 			repaintComponents();
 		} );
 	}
@@ -519,7 +514,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 * TODO
 	 * Creates JLabel for one source in the group source lists
 	 */
-	private Component createEntry( final Source< ? > source )
+	private Component createEntry( final Source< ? > source, final BooleanSupplier isEnabled )
 	{
 		final JLabel p = new JLabel( sourceNameBimap.getName( source ) );
 		p.setBackground( BACKGROUND_COLOR );
@@ -530,7 +525,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			@Override
 			public void mouseReleased( final MouseEvent e )
 			{
-				if ( !manualTransformationActive )
+				if ( isEnabled.getAsBoolean() ) // TODO
 				{
 					final SourceGroup group = ( SourceGroup ) groupsComboBox.getSelectedItem();
 
