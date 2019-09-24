@@ -133,7 +133,7 @@ public class BdvUIPanel extends BdvHandle
 		viewer.setDisplayMode( DisplayMode.FUSED );
 
 		selectionAndGroupingPanel = new SelectionAndGroupingTabs( viewer, viewer.getVisibilityAndGrouping(),
-				manualTransformationEditor, setupAssignments );
+				manualTransformationEditor );
 
 		final NavigationActions navactions = new NavigationActions( inputTriggerConfig );
 		navactions.install( keyBindings, "navigation" );
@@ -203,10 +203,6 @@ public class BdvUIPanel extends BdvHandle
 			{
 				return new BasicSplitPaneDivider( this )
 				{
-
-					/**
-					 *
-					 */
 					private static final long serialVersionUID = 1L;
 
 					@Override
