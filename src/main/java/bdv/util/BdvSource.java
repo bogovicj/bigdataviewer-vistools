@@ -48,8 +48,4 @@ public abstract class BdvSource implements Bdv
 	{
 		return numTimepoints;
 	}
-
-	public abstract String getName(); // TODO
-
- 	public abstract String getTypeAsString(); // TODO
 }
