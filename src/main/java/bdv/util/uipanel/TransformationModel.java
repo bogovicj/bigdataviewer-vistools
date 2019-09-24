@@ -37,7 +37,7 @@ public class TransformationModel implements ManualTransformActiveListener, BdvHa
 
 	private final SourceIndexHelper sourceIndexHelper;
 
-	private final Map< Source< ? >, AffineTransform3D > transformationLookup = new HashMap<>();
+	private final Map< Source< ? >, AffineTransform3D > incrementalTransform = new HashMap<>();
 
 	public TransformationModel( final ViewerPanel viewerPanel, final TriggerBehaviourBindings triggerBindings,
 			final ManualTransformationEditor manualTransformationEditor )
@@ -48,11 +48,11 @@ public class TransformationModel implements ManualTransformActiveListener, BdvHa
 
 		visGro = this.viewerPanel.getVisibilityAndGrouping();
 		this.sourceIndexHelper = new SourceIndexHelper( visGro, viewerPanel );
+
 	}
 
-	public void enableManualTransformation( final boolean selected )
-	{
-		this.manualTransformActiveChanged( selected );
+	public void manualTransformationEditorActive( final ManualTransformActiveListener listener ) {
+		manualTransformationEditor.manualTransformActiveListeners().add( listener );
 	}
 
 	@Override
@@ -63,11 +63,6 @@ public class TransformationModel implements ManualTransformActiveListener, BdvHa
 			saveTransformation();
 	}
 
-	public void addManualTransformActiveListener( final ManualTransformActiveListener listener )
-	{
-		this.manualTransformationEditor.manualTransformActiveListeners().add( listener );
-	}
-
 	public void reset( final boolean singleSourceTransformation )
 	{
 		if ( !( sourceIndexHelper.getCurrentSource() instanceof PlaceHolderSource ) )
@@ -75,20 +70,10 @@ public class TransformationModel implements ManualTransformActiveListener, BdvHa
 			if ( singleSourceTransformation )
 			{
 				manualTransformationEditor.reset();
+				incrementalTransform.put( sourceIndexHelper.getCurrentSource(), new AffineTransform3D() );
 			}
 			else
 			{
-				for ( SourceState< ? > sourceState : viewerPanel.getState().getSources() )
-				{
-					final Source< ? > source = sourceState.getSpimSource();
-					if ( source instanceof TransformedSource )
-					{
-						( ( TransformedSource< ? > ) source ).setFixedTransform( new AffineTransform3D() );
-						( ( TransformedSource< ? > ) source ).setIncrementalTransform( new AffineTransform3D() );
-						( ( TransformedSource< ? > ) source )
-								.setIncrementalTransform( transformationLookup.get( source ) );
-					}
-				}
 				viewerPanel.setCurrentViewerTransform( createViewerInitTransformation() );
 			}
 		}
@@ -99,47 +84,33 @@ public class TransformationModel implements ManualTransformActiveListener, BdvHa
 	 */
 	public void saveTransformation()
 	{
-		System.out.println( "save transformation" );
-		final AffineTransform3D t = new AffineTransform3D();
 		if ( visGro.getDisplayMode() == DisplayMode.GROUP || visGro.getDisplayMode() == DisplayMode.FUSEDGROUP )
 		{
-			final SourceGroup currentGroup = sourceIndexHelper.getCurrentGroup();
 			final List< SourceState< ? > > sources = viewerPanel.getState().getSources();
-			for ( int id : currentGroup.getSourceIds() )
-			{
-				final Source< ? > s = sources.get( id ).getSpimSource();
-				saveCurrentSourceTransform( t, s );
-			}
+			for ( int id : sourceIndexHelper.getCurrentGroup().getSourceIds() )
+				saveCurrentSourceTransform( sources.get( id ).getSpimSource() );
 		}
 		else
 		{
 			final Source< ? > currentSource = sourceIndexHelper.getCurrentSource();
 			if ( currentSource != null )
-			{
-				saveCurrentSourceTransform( t, currentSource );
-				if ( currentSource instanceof TransformedSource )
-				{
-					( ( TransformedSource< ? > ) currentSource ).getFixedTransform( t );
-				}
-				transformationLookup
-						.put( currentSource, t );
-			}
+				saveCurrentSourceTransform( currentSource );
 
 		}
 	}
 
-	private void saveCurrentSourceTransform( final AffineTransform3D t, final Source< ? > s )
+	private void saveCurrentSourceTransform( final Source< ? > s )
 	{
+		final AffineTransform3D t = new AffineTransform3D();
 		if ( s instanceof TransformedSource )
 		{
-			System.out.println( s.getName() );
 			( ( TransformedSource< ? > ) s ).getFixedTransform( t );
+			incrementalTransform.put( s, t );
 		}
 		else if ( s instanceof PlaceHolderSource )
 		{
 			// TODO: But what?
 		}
-		transformationLookup.put( s, t );
 	}
 
 	public void enableRotation( final boolean selected )
@@ -317,13 +288,6 @@ public class TransformationModel implements ManualTransformActiveListener, BdvHa
 		return viewerTransform;
 	}
 
-	@Override
-	public void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
-	{
-		transformationLookup.put( source,
-				getInitialTransformation( source ) );
-	}
-
 	/**
 	 * Extract the transformation of the source with sourceIdx.
 	 *
@@ -342,8 +306,15 @@ public class TransformationModel implements ManualTransformActiveListener, BdvHa
 	}
 
 	@Override
+	public void sourceAdded( final Source< ? > source, final ConverterSetup converterSetup )
+	{
+		incrementalTransform.put( source,
+				getInitialTransformation( source ) );
+	}
+
+	@Override
 	public void sourceRemoved( final Source< ? > source )
 	{
-		transformationLookup.remove( source );
+		incrementalTransform.remove( source );
 	}
 }

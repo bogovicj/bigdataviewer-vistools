@@ -28,6 +28,8 @@
  */
 package bdv.util.uipanel;
 
+import bdv.tools.transformation.ManualTransformActiveListener;
+import bdv.tools.transformation.TransformedSource;
 import java.awt.Color;
 
 import javax.swing.JButton;
@@ -73,6 +75,7 @@ public class TransformationPanel extends JPanel
 		setupResetButton( reset, individualTransformation );
 
 		setupManualTransformationCheckBox( reset, individualTransformation );
+		model.manualTransformationEditorActive( active -> individualTransformation.setSelected( active ) );
 
 		translation.doClick();
 		rotation.doClick();
@@ -136,7 +139,7 @@ public class TransformationPanel extends JPanel
 			if ( ev.getSource() == individualTransformation )
 			{
 				final boolean selected = individualTransformation.isSelected();
-				model.enableManualTransformation( selected );
+				model.manualTransformActiveChanged( selected );
 				reset.setText( selected ? "Reset to Initial Transformation" : "Reset Viewer Transformation" );
 			}
 		} );
