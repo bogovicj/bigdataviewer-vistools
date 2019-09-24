@@ -198,6 +198,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 */
 	private final Listeners.List< SelectionChangeListener > selectionChangeListeners = new Listeners.SynchronizedList<>();
 
+	private JPanel sourceControlTab;
+
+	private JPanel groupControlTab;
 
 	/**
 	 * This class holds the selection and grouping tab of the big data viewer
@@ -240,9 +243,11 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		this.setBackground( BACKGROUND_COLOR );
 		this.setForeground( FOREGROUND_COLOR );
 
-		this.addTab( "Source Control", createSourceControl() );
-		this.addTab( "Group Control", createGroupControl() );
-		this.addChangeListener( e -> visGro.setGroupingEnabled( isGroupTabActive() ) );
+		sourceControlTab = createSourceControl();
+		groupControlTab = createGroupControl();
+		this.addTab( "Source Control", sourceControlTab );
+		this.addTab( "Group Control", groupControlTab );
+		this.addChangeListener( e -> visGro.setGroupingEnabled( getSelectedComponent() == groupControlTab ) );
 	}
 
 	/**
@@ -280,7 +285,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			case Event.DISPLAY_MODE_CHANGED:
 				singleGroupModeCheckbox.setSelected( !visGro.isFusedEnabled() );
 				singleSourceModeCheckbox.setSelected( !visGro.isFusedEnabled() );
-				setSelectedIndex( visGro.isGroupingEnabled() ? 1 : 0 );
+				setSelectedComponent( visGro.isGroupingEnabled() ? groupControlTab : sourceControlTab );
 				break;
 			case Event.SOURCE_TO_GROUP_ASSIGNMENT_CHANGED:
 				updateGroupSourceComponent();
@@ -376,7 +381,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 *
 	 * @return the source contorl panel
 	 */
-	private Component createSourceControl()
+	private JPanel createSourceControl()
 	{
 		final JPanel p = new JPanel( new MigLayout( "fillx", "[grow][][]", "[][]push[][]" ) );
 		p.setBackground( BACKGROUND_COLOR );
@@ -465,6 +470,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		return p;
 	}
 
+	/**
+	 * TODO
+	 * Rebuild selectedSources and remainingSources panel
+	 */
 	private void updateGroupSourceComponent()
 	{
 		selectedSources.removeAll();
@@ -480,6 +489,10 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		} );
 	}
 
+	/**
+	 * TODO
+	 * Creates JLabel for one source in the group source lists
+	 */
 	private Component createEntry( final Source< ? > source )
 	{
 		final JLabel p = new JLabel( sourceNameBimap.getName( source ) );
@@ -516,11 +529,22 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	}
 
 	/**
+	 * TODO
+	 */
+	private void repaintComponents()
+	{
+		selectedSources.revalidate();
+		remainingSources.revalidate();
+		selectedSources.repaint();
+		remainingSources.repaint();
+	}
+
+	/**
 	 * Build the group control panel.
 	 *
 	 * @return the group control panel
 	 */
-	private Component createGroupControl()
+	private JPanel createGroupControl()
 	{
 		final JPanel p = new JPanel( new MigLayout( "fillx", "[grow][][]", "" ) );
 		p.setBackground( BACKGROUND_COLOR );
@@ -656,19 +680,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		p.add( singleGroupModeCheckbox, "span, growx" );
 
 		return p;
-	}
-
-	private boolean isGroupTabActive()
-	{
-		return getSelectedIndex() == 1;
-	}
-
-	private void repaintComponents()
-	{
-		selectedSources.revalidate();
-		remainingSources.revalidate();
-		selectedSources.repaint();
-		remainingSources.repaint();
 	}
 
 	// A white look and feel for scroll bars.
