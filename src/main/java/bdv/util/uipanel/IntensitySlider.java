@@ -49,16 +49,6 @@ import javax.swing.JPanel;
  */
 public class IntensitySlider
 {
-	/**
-	 * Setup assignments of the viewer.
-	 */
-	private final SetupAssignments setupAssignments;
-
-	/**
-	 * Bdv viewer panel.
-	 */
-	private final ViewerPanel viewerPanel;
-
 	private final Map< Source< ? >, SourceRange > sourceToRange = new HashMap<>();
 
 	public RangeSliderSpinnerPanel getPanel()
@@ -138,11 +128,9 @@ public class IntensitySlider
 
 	private final RangeSliderSpinnerPanel panel;
 
-	public IntensitySlider( final SetupAssignments setupAssignments, final ViewerPanel vp )
+	public IntensitySlider()
 	{
-		this.setupAssignments = setupAssignments;
-		this.viewerPanel = vp;
-		this.panel = new RangeSliderSpinnerPanel( setupAssignments, vp );
+		this.panel = new RangeSliderSpinnerPanel();
 	}
 
 	public synchronized void setSource( final Source< ? > source )

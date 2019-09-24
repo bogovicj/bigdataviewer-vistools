@@ -69,16 +69,6 @@ public class RangeSliderSpinnerPanel extends JPanel
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * Setup assignments of the viewer.
-	 */
-	private final SetupAssignments setupAssignments;
-
-	/**
-	 * Bdv viewer panel.
-	 */
-	private final ViewerPanel viewerPanel;
-
-	/**
 	 * The range slider.
 	 */
 	private final RangeSlider rs;
@@ -168,13 +158,9 @@ public class RangeSliderSpinnerPanel extends JPanel
 	/**
 	 * A range slider panel with two knobs and min/max spinners.
 	 */
-	public RangeSliderSpinnerPanel( final SetupAssignments setupAssignments, final ViewerPanel vp )
+	public RangeSliderSpinnerPanel()
 	{
 		setupPanel();
-
-		this.setupAssignments = setupAssignments;
-
-		this.viewerPanel = vp;
 
 		currentMinSpinner = new JSpinner( new SpinnerNumberModel( 0.0, 0.0, 1.0, 1.0 ) );
 		setupMinSpinner();
