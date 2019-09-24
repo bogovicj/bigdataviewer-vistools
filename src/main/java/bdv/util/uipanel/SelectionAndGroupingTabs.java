@@ -80,6 +80,12 @@ import bdv.viewer.VisibilityAndGrouping;
 import bdv.viewer.VisibilityAndGrouping.Event;
 import bdv.viewer.state.SourceGroup;
 
+import static bdv.util.uipanel.ColorsAndIcons.BACKGROUND_COLOR;
+import static bdv.util.uipanel.ColorsAndIcons.FOREGROUND_COLOR;
+import static bdv.util.uipanel.ColorsAndIcons.notVisibleIcon;
+import static bdv.util.uipanel.ColorsAndIcons.smallVisibilityIcon;
+import static bdv.util.uipanel.ColorsAndIcons.visibleIcon;
+
 /**
  * The tabbed pane with all BDV-UI components.
  *
@@ -89,16 +95,6 @@ import bdv.viewer.state.SourceGroup;
 public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.SourceChangeListener
 {
 	private static final long serialVersionUID = 1L;
-
-	/**
-	 * The UI foreground color.
-	 */
-	private static final Color FOREGROUND_COLOR = Color.darkGray;
-
-	/**
-	 * The UI background color.
-	 */
-	private static final Color BACKGROUND_COLOR = Color.white;
 
 	/**
 	 * Item to add new groups.
@@ -470,8 +466,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 		selection.setBottomComponent( scrollPaneBottom );
 
 		// label displaying the visibility state of the current group (eye icon)
-		groupVisibilityCheckbox = new JCheckBox( VisibilityIcons.big( false ) );
-		groupVisibilityCheckbox.setSelectedIcon( VisibilityIcons.big( true ) );
+		groupVisibilityCheckbox = new JCheckBox( ColorsAndIcons.notVisibleIcon );
+		groupVisibilityCheckbox.setSelectedIcon( ColorsAndIcons.visibleIcon );
 		groupVisibilityCheckbox.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
 		groupVisibilityCheckbox.setToolTipText( "Show group in fused-group mode." );
 		groupVisibilityCheckbox.addActionListener( e -> {
@@ -586,7 +582,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				if ( value.equals( NEW_GROUP ) )
 					setIcon( null );
 				else
-					setIcon( VisibilityIcons.small( value.isActive() ) );
+					setIcon( smallVisibilityIcon( value.isActive() ) );
 				setText( value.getName() );
 				setToolTipText( value.getName() );
 			}
@@ -689,8 +685,8 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			add( sourcesComboBox, "growx" );
 
 			// source visibility icon (eye icon)
-			sourceVisibilityCheckbox = new JCheckBox( VisibilityIcons.big( false ) );
-			sourceVisibilityCheckbox.setSelectedIcon( VisibilityIcons.big( true ) );
+			sourceVisibilityCheckbox = new JCheckBox( notVisibleIcon );
+			sourceVisibilityCheckbox.setSelectedIcon( visibleIcon );
 			sourceVisibilityCheckbox.setBorder( new EmptyBorder( 0, 0, 0, 0 ) );
 			sourceVisibilityCheckbox.setToolTipText( "Show source in fused mode." );
 			sourceVisibilityCheckbox.addActionListener( e -> {
@@ -857,7 +853,7 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 					setText( uniqueName );
 					setToolTipText( uniqueName );
 					final boolean visible = sourceIndexHelper.isSourceActive( value );
-					setIcon( VisibilityIcons.small( visible ) );
+					setIcon( smallVisibilityIcon( visible ) );
 				}
 				else
 					setIcon( null );
