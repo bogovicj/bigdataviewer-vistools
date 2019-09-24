@@ -258,11 +258,20 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	 */
 	private void addListeners( final ManualTransformationEditor manualTransformationEditor )
 	{
-		manualTransformationEditor.manualTransformActiveListeners().add( enabled -> {
-			setEnableSelectionAndGrouping( !enabled );
-			manualTransformationActive = enabled;
+		manualTransformationEditor.manualTransformActiveListeners().add( active -> {
+			this.setEnabled( !active );
+			setEnabledSourcesTab( !active );
+			setEnabledGroupsTab( !active );
+			manualTransformationActive = active;
 		} );
 
+		// -- for tab pane --
+		visGro.addUpdateListener( e -> {
+			if ( e.id == Event.DISPLAY_MODE_CHANGED )
+				setSelectedComponent( visGro.isGroupingEnabled() ? groupControlTab : sourceControlTab );
+		} );
+
+		// -- for sources tab --
 		visGro.addUpdateListener( e -> {
 			switch( e.id )
 			{
@@ -270,13 +279,26 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				sourcesComboBox.setSelectedItem( sourceIndexHelper.getCurrentSource() );
 				updateSourceVisibilityButton();
 				break;
-			case Event.CURRENT_GROUP_CHANGED:
-				groupsComboBox.setSelectedItem( sourceIndexHelper.getCurrentGroup() );
-				updateGroupVisibilityButton();
-				break;
 			case Event.SOURCE_ACTVITY_CHANGED:
 				sourcesComboBox.repaint();
 				updateSourceVisibilityButton();
+				break;
+			case Event.DISPLAY_MODE_CHANGED:
+				singleSourceModeCheckbox.setSelected( !visGro.isFusedEnabled() );
+				break;
+			case Event.NUM_SOURCES_CHANGED:
+				// TODO: if bdv core would provide a Map<Source,ConverterSetup> or similar, this event could replace the sourceAdded() listener?
+				break;
+			}
+		} );
+
+		// -- for groups tab --
+		visGro.addUpdateListener( e -> {
+			switch( e.id )
+			{
+			case Event.CURRENT_GROUP_CHANGED:
+				groupsComboBox.setSelectedItem( sourceIndexHelper.getCurrentGroup() );
+				updateGroupVisibilityButton();
 				break;
 			case Event.GROUP_ACTIVITY_CHANGED:
 				groupsComboBox.repaint();
@@ -284,8 +306,6 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 				break;
 			case Event.DISPLAY_MODE_CHANGED:
 				singleGroupModeCheckbox.setSelected( !visGro.isFusedEnabled() );
-				singleSourceModeCheckbox.setSelected( !visGro.isFusedEnabled() );
-				setSelectedComponent( visGro.isGroupingEnabled() ? groupControlTab : sourceControlTab );
 				break;
 			case Event.SOURCE_TO_GROUP_ASSIGNMENT_CHANGED:
 				updateGroupSourceComponent();
@@ -293,16 +313,9 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 			case Event.GROUP_NAME_CHANGED:
 				groupsComboBox.repaint();
 				break;
-			case Event.VISIBILITY_CHANGED:
-				// TODO?
-				break;
-			case Event.NUM_SOURCES_CHANGED:
-				// TODO?
-				break;
 			case Event.NUM_GROUPS_CHANGED:
-				// TODO?
+				// TODO?!
 				break;
-			default:
 			}
 		} );
 	}
@@ -349,31 +362,44 @@ public class SelectionAndGroupingTabs extends JTabbedPane implements BdvHandle.S
 	}
 
 	/**
-	 * Toggle component enable.
+	 * Sets whether or not this panel and its children are enabled.
 	 *
-	 * @param active
-	 *            state
+	 * @param enabled
+	 *        {@code true} if this panel should be enabled, {@code false} if it should be disabled.
 	 */
-	private void setEnableSelectionAndGrouping( final boolean active )
+	private void setEnabledSourcesTab( final boolean enabled )
 	{
-		sourcesComboBox.setEnabled( active );
-		singleSourceModeCheckbox.setEnabled( active );
-		groupsComboBox.setEnabled( active );
-		singleGroupModeCheckbox.setEnabled( active );
-		selectedSources.setEnabled( active );
-		remainingSources.setEnabled( active );
+		sourcesComboBox.setEnabled( enabled );
+		singleSourceModeCheckbox.setEnabled( enabled );
+
+		sourceControlTab.setEnabled( enabled );
+	}
+
+	/**
+	 * Sets whether or not this panel and its children are enabled.
+	 *
+	 * @param enabled
+	 *        {@code true} if this panel should be enabled, {@code false} if it should be disabled.
+	 */
+	private void setEnabledGroupsTab( final boolean enabled )
+	{
+		groupsComboBox.setEnabled( enabled );
+		singleGroupModeCheckbox.setEnabled( enabled );
+		selectedSources.setEnabled( enabled );
+		remainingSources.setEnabled( enabled );
 		for ( final Component c : selectedSources.getComponents() )
 		{
 			if ( c instanceof JLabel )
-				c.setEnabled( active );
+				c.setEnabled( enabled );
 		}
 		for ( final Component c : remainingSources.getComponents() )
 		{
 			if ( c instanceof JLabel )
-				c.setEnabled( active );
+				c.setEnabled( enabled );
 		}
-		removeGroup.setEnabled( active );
-		this.setEnabled( active );
+		removeGroup.setEnabled( enabled );
+
+		groupControlTab.setEnabled( enabled );
 	}
 
 	/**
