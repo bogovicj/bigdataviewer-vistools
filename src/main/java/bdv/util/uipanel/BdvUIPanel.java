@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Graphics;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
@@ -17,6 +18,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.Border;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 
 import org.scijava.ui.behaviour.MouseAndKeyHandler;
@@ -150,7 +153,7 @@ public class BdvUIPanel extends BdvHandle
 		bdvactions.manualTransform( manualTransformationEditor );
 		this.sourceChangeListeners().add( selectionAndGroupingPanel );
 
-		splitPane = createSplitPane();
+		createSplitPane();
 		controls = new CardPanel();
 
 		controls.addNewCard( new JLabel( "Selection" ), true, selectionAndGroupingPanel );
@@ -193,33 +196,45 @@ public class BdvUIPanel extends BdvHandle
 	 *
 	 * @return splitpane
 	 */
-	private JSplitPane createSplitPane()
+	private void createSplitPane()
 	{
-		final JSplitPane splitPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT );
+		splitPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT );
 		splitPane.setBorder( null );
-		splitPane.setOneTouchExpandable( true );
+		splitPane.setUI( new BasicSplitPaneUI()
+						 {
+							 public BasicSplitPaneDivider createDefaultDivider()
+							 {
+								 return new BasicSplitPaneDivider( this )
+								 {
+									 private static final long serialVersionUID = 1L;
 
-		final Component expandPanel = ((BasicSplitPaneUI)splitPane.getUI()).getDivider().getComponent( 0 );
-		final Component collapsePanel = ((BasicSplitPaneUI)splitPane.getUI()).getDivider().getComponent( 1 );
+									 @Override
+									 public void paint( Graphics g )
+									 {
+										 g.setColor( Color.white );
+										 g.fillRect( 0, 0, getSize().width, getSize().height );
+										 super.paint( g );
+									 }
 
-		expandPanel.setBackground( Color.white );
-		collapsePanel.setBackground( Color.white );
-		splitPane.addPropertyChangeListener( JSplitPane.DIVIDER_LOCATION_PROPERTY, evt -> {
-			if (splitPane.getDividerLocation() > splitPane.getMaximumDividerLocation()) {
-				expandPanel.setVisible( true );
-				collapsePanel.setVisible( false );
-			}else {
-				expandPanel.setVisible( false );
-				collapsePanel.setVisible( true );
-			}
-		} );
+									 @Override
+									 public void setBorder( final Border border )
+									 {
+										 super.setBorder( null );
+									 }
+								 };
+							 }
+						 });
 
+		setDividerSize();
 
+		splitPane.setForeground( Color.white );
 		splitPane.setBackground( Color.white );
 		splitPane.setDividerLocation( viewer.getPreferredSize().width );
 		splitPane.setResizeWeight( 1.0 );
+	}
 
-		return splitPane;
+	private void setDividerSize() {
+		splitPane.setDividerSize( 3 );
 	}
 
 	@Override
@@ -316,5 +331,21 @@ public class BdvUIPanel extends BdvHandle
 	public void toggleCard( final String cardName )
 	{
 		controls.toggleCardFold( cardName );
+	}
+
+	/**
+	 * Collapse the UI-Panel.
+	 */
+	public void collapseUI()
+	{
+		if (this.splitPane.getDividerLocation() < this.splitPane.getMaximumDividerLocation())
+		{
+			this.splitPane.setDividerSize( 0 );
+			this.splitPane.setDividerLocation( 1.0d );
+		}else
+		{
+			this.splitPane.setDividerLocation( this.splitPane.getLastDividerLocation() );
+			setDividerSize();
+		}
 	}
 }
