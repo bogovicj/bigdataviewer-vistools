@@ -72,4 +72,12 @@ public class InformationPanel extends JPanel
 	{
 		this.type.setText( type );
 	}
+
+	@Override
+	public void setEnabled( final boolean enabled )
+	{
+		this.getComponent( 0 ).setEnabled( enabled );
+		type.setEnabled( enabled );
+		super.setEnabled( enabled );
+	}
 }
