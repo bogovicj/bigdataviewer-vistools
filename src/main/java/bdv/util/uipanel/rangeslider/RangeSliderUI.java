@@ -274,8 +274,8 @@ class RangeSliderUI extends BasicSliderUI
 			g.translate( trackBounds.x, trackBounds.y + cy );
 
 			// Draw selected range.
-			g.setColor( rangeColor );
-			for ( int y = 0; y <= 3; y++ )
+			g.setColor( getSliderColor() );
+			for ( int y = 0; y <= 2; y++ )
 			{
 				g.drawLine( lowerX - trackBounds.x, y, upperX - trackBounds.x, y );
 			}
@@ -300,8 +300,8 @@ class RangeSliderUI extends BasicSliderUI
 			g.translate( trackBounds.x + cx, trackBounds.y );
 
 			// Draw selected range.
-			g.setColor( rangeColor );
-			for ( int x = 0; x <= 3; x++ )
+			g.setColor( getSliderColor() );
+			for ( int x = 0; x <= 2; x++ )
 			{
 				g.drawLine( x, lowerY - trackBounds.y, x, upperY - trackBounds.y );
 			}
@@ -321,6 +321,11 @@ class RangeSliderUI extends BasicSliderUI
 	{
 		// Do nothing.
 	}
+
+	private Color getSliderColor() {
+		return slider.isEnabled() ? Color.darkGray : Color.lightGray;
+	}
+
 
 	/**
 	 * Paints the thumb for the lower value using the specified graphics object.
@@ -342,10 +347,11 @@ class RangeSliderUI extends BasicSliderUI
 				RenderingHints.VALUE_ANTIALIAS_ON );
 		g2d.translate( knobBounds.x, knobBounds.y );
 
-		g2d.setColor( Color.darkGray );
+		final Color sliderColor = getSliderColor();
+		g2d.setColor( sliderColor );
 		g2d.fill( thumbShape );
 
-		g2d.setColor( Color.darkGray );
+		g2d.setColor( sliderColor );
 		g2d.draw( thumbShape );
 
 		// Dispose graphics.
@@ -372,10 +378,11 @@ class RangeSliderUI extends BasicSliderUI
 				RenderingHints.VALUE_ANTIALIAS_ON );
 		g2d.translate( knobBounds.x, knobBounds.y );
 
-		g2d.setColor( Color.darkGray );
+		final Color sliderColor = getSliderColor();
+		g2d.setColor( sliderColor );
 		g2d.fill( thumbShape );
 
-		g2d.setColor( Color.darkGray );
+		g2d.setColor( sliderColor );
 		g2d.draw( thumbShape );
 
 		// Dispose graphics.

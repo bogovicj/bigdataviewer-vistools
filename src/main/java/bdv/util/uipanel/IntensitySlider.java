@@ -147,4 +147,10 @@ public class IntensitySlider
 	{
 		sourceToRange.remove( source );
 	}
+
+	public void setEnabled( final boolean enabled )
+	{
+		panel.setEnabled( enabled );
+	}
+
 }

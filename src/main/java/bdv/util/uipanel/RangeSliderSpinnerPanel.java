@@ -41,6 +41,7 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JFormattedTextField;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.LineBorder;
@@ -108,6 +109,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 	 */
 	private final JSpinner currentMaxSpinner;
 
+	private final JButton shrinkRange;
+
 	private Range range;
 
 	private ChangeListener maxSpinnerCL;
@@ -174,8 +177,8 @@ public class RangeSliderSpinnerPanel extends JPanel
 		lowerValue.subscribe( d -> setDisplayRange() );
 		upperValue.subscribe( d -> setDisplayRange() );
 
-		final JButton shrinkRange = new JButton( "><" );
-		setupShrinkRangeButton( shrinkRange );
+		shrinkRange = new JButton( "><" );
+		setupShrinkRangeButton();
 
 		this.add( currentMinSpinner );
 		this.add( rs, "growx" );
@@ -190,7 +193,17 @@ public class RangeSliderSpinnerPanel extends JPanel
 		this.setBackground( Color.WHITE );
 	}
 
-	private void setupShrinkRangeButton( final JButton shrinkRange )
+	@Override
+	public void setEnabled( final boolean enabled )
+	{
+		currentMaxSpinner.setEnabled( enabled );
+		currentMinSpinner.setEnabled( enabled );
+		rs.setEnabled( enabled );
+		shrinkRange.setEnabled( enabled );
+		super.setEnabled( enabled );
+	}
+
+	private void setupShrinkRangeButton()
 	{
 		shrinkRange.setBackground( Color.white );
 		shrinkRange.setForeground( Color.darkGray );
