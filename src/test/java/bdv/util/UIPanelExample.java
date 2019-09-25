@@ -45,6 +45,15 @@ public class UIPanelExample
 //		BdvFunctions.show( img, "img", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XYC ) );
 		for (int i = 0; i < 140; i++)
 			BdvFunctions.show( img_float, "test", Bdv.options().addTo( bdv ).axisOrder( AxisOrder.XY ) );
+
+		// Action to open and close the BDV-UI panel via P-key.
+		// TODO: Remove 
+		Actions actions = new Actions( new InputTriggerConfig() );
+		actions.install( bdv.getBdvHandle().getKeybindings(), "my-new-actions" );
+
+		actions.runnableAction( () -> {
+			((BdvUIPanel)bdv).collapseUI();
+		}, "print global pos", "P" );
 	}
 
 	private static BdvOverlay createBdvOverlay( final Random random )
