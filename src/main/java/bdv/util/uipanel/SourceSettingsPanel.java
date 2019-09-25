@@ -195,6 +195,7 @@ public class SourceSettingsPanel extends JPanel
 		singleSourceModeCheckbox.setEnabled( enabled );
 		intensitySlider.setEnabled( enabled ); // TODO: What is the intended behaviour? Should the whole panel be disabled or is it okay to change activity and ranges?
 		informationPanel.setEnabled( enabled ); // TODO: Same as above. I think switching here looks better.
+		sourceVisibilityCheckbox.setEnabled( enabled ); // TODO: Same question as above.
 		super.setEnabled( enabled );
 	}
 
