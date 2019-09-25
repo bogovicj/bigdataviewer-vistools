@@ -3,9 +3,9 @@ package bdv.util.uipanel;
 import bdv.util.BdvHandle;
 import bdv.util.BdvOptions;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
@@ -17,7 +17,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.plaf.basic.BasicSplitPaneDivider;
 import javax.swing.plaf.basic.BasicSplitPaneUI;
 
 import org.scijava.ui.behaviour.MouseAndKeyHandler;
@@ -197,26 +196,26 @@ public class BdvUIPanel extends BdvHandle
 	private JSplitPane createSplitPane()
 	{
 		final JSplitPane splitPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT );
-		splitPane.setUI( new BasicSplitPaneUI()
-		{
-			public BasicSplitPaneDivider createDefaultDivider()
-			{
-				return new BasicSplitPaneDivider( this )
-				{
-					private static final long serialVersionUID = 1L;
+		splitPane.setBorder( null );
+		splitPane.setOneTouchExpandable( true );
 
-					@Override
-					public void paint( Graphics g )
-					{
-						g.setColor( new Color( 238, 238, 238 ) );
-						g.fillRect( 0, 0, getSize().width, getSize().height );
-						super.paint( g );
-					}
-				};
+		final Component expandPanel = ((BasicSplitPaneUI)splitPane.getUI()).getDivider().getComponent( 0 );
+		final Component collapsePanel = ((BasicSplitPaneUI)splitPane.getUI()).getDivider().getComponent( 1 );
+
+		expandPanel.setBackground( Color.white );
+		collapsePanel.setBackground( Color.white );
+		splitPane.addPropertyChangeListener( JSplitPane.DIVIDER_LOCATION_PROPERTY, evt -> {
+			if (splitPane.getDividerLocation() > splitPane.getMaximumDividerLocation()) {
+				expandPanel.setVisible( true );
+				collapsePanel.setVisible( false );
+			}else {
+				expandPanel.setVisible( false );
+				collapsePanel.setVisible( true );
 			}
 		} );
 
-		splitPane.setBackground( new Color( 31, 31, 45 ) );
+
+		splitPane.setBackground( Color.white );
 		splitPane.setDividerLocation( viewer.getPreferredSize().width );
 		splitPane.setResizeWeight( 1.0 );
 
