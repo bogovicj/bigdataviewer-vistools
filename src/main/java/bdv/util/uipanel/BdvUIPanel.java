@@ -9,6 +9,7 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.JComponent;
@@ -171,6 +172,17 @@ public class BdvUIPanel extends BdvHandle
 		addStuff( viewer, controls );
 
 		new IntensityMouseOverOverlay<>( viewer );
+
+		try
+		{
+			final SplitPaneOneTouchExpandAnimator oneTouchExpandAnimator = new SplitPaneOneTouchExpandAnimator( this );
+			viewer.getDisplay().addMouseMotionListener( oneTouchExpandAnimator );
+			viewer.getDisplay().addMouseListener( oneTouchExpandAnimator );
+			viewer.addOverlayAnimator( oneTouchExpandAnimator );
+		} catch ( IOException e ) {
+			System.out.println("Couldn't load split-pane one touch expand resources.");
+		}
+
 
 		helpDialog = new HelpDialog( dialogOwner );
 		BigDataViewerActions actions = new BigDataViewerActions( inputTriggerConfig );

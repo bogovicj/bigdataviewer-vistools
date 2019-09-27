@@ -1,6 +1,5 @@
 package bdv.util.uipanel;
 
-import bdv.viewer.ViewerPanel;
 import bdv.viewer.animate.OverlayAnimator;
 import java.awt.AlphaComposite;
 import java.awt.Color;
@@ -19,7 +18,7 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 
 	private final BufferedImage rightarrow;
 
-	private final ViewerPanel viewer;
+	private final BdvUIPanel bdvUIPanel;
 
 	private final int imgw;
 
@@ -32,6 +31,8 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 	private float imgX;
 
 	private int mouseX;
+
+	private int mouseY;
 
 	private boolean repaint;
 
@@ -49,14 +50,14 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 
 	private float backgroundAlpha = 0.65f;
 
-	public SplitPaneOneTouchExpandAnimator( final ViewerPanel viewer ) throws IOException
+	public SplitPaneOneTouchExpandAnimator( final BdvUIPanel viewer ) throws IOException
 	{
 		rightarrow = ImageIO.read( SplitPaneOneTouchExpandAnimator.class.getResource( "rightarrow_small.png" ) );
 		leftarrow = ImageIO.read( SplitPaneOneTouchExpandAnimator.class.getResource( "leftarrow_small.png" ) );
 		this.imgw = leftarrow.getWidth();
 		this.imgh = leftarrow.getHeight();
 		this.imgX = 0;
-		this.viewer = viewer;
+		this.bdvUIPanel = viewer;
 	}
 
 	@Override
@@ -66,14 +67,16 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 		viewPortHeight = g.getClipBounds().height;
 
 		time_since_last_update += time - last_time;
-		if (time_since_last_update > 1)
+		if ( time_since_last_update > 1 )
 		{
 			if ( viewPortWidth - mouseX < imgw )
 			{
 				if ( collapsed )
 					activateExpand( g, time_since_last_update );
-				else
+				else if ( getLocationY() < mouseY && mouseY < getLocationY() + imgh )
 					activateCollapse( g, time_since_last_update );
+				else
+					deactivateCollapse( g, time_since_last_update );
 			}
 			else
 			{
@@ -96,8 +99,8 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 		final int y = getLocationY();
 		imgX = viewPortWidth - imgw;
 
-		drawBackground( g, (int) imgX, y, (int) imgX + 50, imgh, Math.min(alpha, backgroundAlpha ) );
-		drawImg( g, rightarrow, (int) imgX, y, alpha );
+		drawBackground( g, ( int ) imgX, y, ( int ) imgX + 50, imgh, Math.min( alpha, backgroundAlpha ) );
+		drawImg( g, rightarrow, ( int ) imgX, y, alpha );
 
 		// Reset animation keyFrame-frame
 		keyFrame = 0;
@@ -136,10 +139,10 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 		imgX = Math.max( viewPortWidth - imgw - 10, imgX );
 		final int y = getLocationY();
 
-		drawBackground( g, (int) imgX, y, (int) imgX + 50, imgh, Math.min(alpha, backgroundAlpha) );
-		drawImg( g, rightarrow, (int) imgX, y, alpha );
+		drawBackground( g, ( int ) imgX, y, ( int ) imgX + 50, imgh, Math.min( alpha, backgroundAlpha ) );
+		drawImg( g, rightarrow, ( int ) imgX, y, alpha );
 
-		repaint = keyFrame !=2 || alpha != 1.0;
+		repaint = keyFrame != 2 || alpha != 1.0;
 	}
 
 	private void deactivateExpand( final Graphics2D g, final long time_since_last_update )
@@ -148,19 +151,24 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 		getAlpha( false );
 
 		// Speed up animation by factor 2
-		imgX += 2*animationSpeed * time_since_last_update;
-		imgX = Math.max( viewPortWidth - imgw, Math.min( viewPortWidth, imgX ));
+		imgX += 2 * animationSpeed * time_since_last_update;
+		imgX = Math.max( viewPortWidth - imgw, Math.min( viewPortWidth, imgX ) );
 		final int y = getLocationY();
 
-		drawBackground( g, (int) imgX, y, (int) imgX + 50, imgh, alpha );
-		drawImg( g, leftarrow, (int) imgX, y, alpha );
+		drawBackground( g, ( int ) imgX, y, ( int ) imgX + 50, imgh, alpha );
+		drawImg( g, leftarrow, ( int ) imgX, y, alpha );
 
 		// Set keyFrame-frames back based on image position
-		if ( imgX < viewPortWidth -imgw + imgw/2) {
+		if ( imgX < viewPortWidth - imgw + imgw / 2 )
+		{
 			keyFrame = 2;
-		} else if ( imgX < viewPortWidth - imgw) {
+		}
+		else if ( imgX < viewPortWidth - imgw )
+		{
 			keyFrame = 1;
-		} else {
+		}
+		else
+		{
 			keyFrame = 0;
 		}
 
@@ -173,40 +181,49 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 		getAlpha( true );
 
 		// Slide image in
-		if ( keyFrame == 0)
+		if ( keyFrame == 0 )
 		{
 			// Slide image in with doubled speed
 			imgX -= 2 * animationSpeed * time_since_last_update;
 			imgX = Math.max( viewPortWidth - imgw, imgX );
-			if ( imgX == viewPortWidth - imgw) {
+			if ( imgX == viewPortWidth - imgw )
+			{
 				keyFrame = 1;
 			}
-		} else if ( keyFrame == 1) {
+		}
+		else if ( keyFrame == 1 )
+		{
 			// Move it half back
-			imgX += animationSpeed *  time_since_last_update;
-			imgX = Math.min( viewPortWidth - imgw + imgw/2, imgX );
-			if ( imgX == viewPortWidth - imgw + imgw/2) {
+			imgX += animationSpeed * time_since_last_update;
+			imgX = Math.min( viewPortWidth - imgw + imgw / 2, imgX );
+			if ( imgX == viewPortWidth - imgw + imgw / 2 )
+			{
 				keyFrame = 2;
 			}
-		} else if ( keyFrame == 2) {
+		}
+		else if ( keyFrame == 2 )
+		{
 			// And move it again full in
 			imgX -= animationSpeed * time_since_last_update;
 			imgX = Math.max( viewPortWidth - imgw, imgX );
-			if ( imgX == viewPortWidth - imgw) {
+			if ( imgX == viewPortWidth - imgw )
+			{
 				keyFrame = 3;
 			}
-		} else {
+		}
+		else
+		{
 			imgX = viewPortWidth - imgw;
 		}
 		final int y = getLocationY();
 
 		// Background should only move out and stay
 		if ( keyFrame > 0 )
-			drawBackground( g, viewPortWidth -imgw, y, imgw + 50, imgh, alpha );
+			drawBackground( g, viewPortWidth - imgw, y, imgw + 50, imgh, alpha );
 		else
-			drawBackground( g, (int) imgX, y, (int) imgX + 50, imgh, alpha );
+			drawBackground( g, ( int ) imgX, y, ( int ) imgX + 50, imgh, alpha );
 
-		drawImg( g, leftarrow, (int) imgX, y, alpha );
+		drawImg( g, leftarrow, ( int ) imgX, y, alpha );
 
 		repaint = keyFrame != 3;
 	}
@@ -216,28 +233,34 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 		return ( viewPortHeight - imgh ) / 2;
 	}
 
-	private void getAlpha(final boolean fadeIn) {
-		if (fadeIn) {
-			alpha += (1 / 250.0) * time_since_last_update;
-			alpha = Math.min( 1, alpha);
-		} else {
-			alpha -= (1 / 250.0) * time_since_last_update;
-			alpha = Math.max( 0.25f, alpha);
+	private void getAlpha( final boolean fadeIn )
+	{
+		if ( fadeIn )
+		{
+			alpha += ( 1 / 250.0 ) * time_since_last_update;
+			alpha = Math.min( 1, alpha );
+		}
+		else
+		{
+			alpha -= ( 1 / 250.0 ) * time_since_last_update;
+			alpha = Math.max( 0.25f, alpha );
 		}
 	}
 
-	private void drawBackground(final Graphics2D g, final int x, final int y, final int width, final int height, final float alpha) {
+	private void drawBackground( final Graphics2D g, final int x, final int y, final int width, final int height, final float alpha )
+	{
 		final AlphaComposite alcom = AlphaComposite.getInstance(
-				AlphaComposite.SRC_OVER, Math.min(alpha, backgroundAlpha));
+				AlphaComposite.SRC_OVER, Math.min( alpha, backgroundAlpha ) );
 		g.setColor( Color.black );
-		g.setComposite(alcom);
+		g.setComposite( alcom );
 		g.fillRoundRect( x, y, width, height, 50, 50 );
 	}
 
-	private void drawImg(final Graphics2D g, final BufferedImage img, final int x, final int y, final float alpha) {
+	private void drawImg( final Graphics2D g, final BufferedImage img, final int x, final int y, final float alpha )
+	{
 		final AlphaComposite alcom = AlphaComposite.getInstance(
-				AlphaComposite.SRC_OVER, alpha);
-		g.setComposite(alcom);
+				AlphaComposite.SRC_OVER, alpha );
+		g.setComposite( alcom );
 		g.drawImage( img, x, y, null );
 	}
 
@@ -262,16 +285,19 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 	public void mouseMoved( final MouseEvent e )
 	{
 		mouseX = e.getX();
+		mouseY = e.getY();
 	}
 
 	@Override
 	public void mouseClicked( final MouseEvent e )
 	{
-		if ( mouseX > viewPortWidth -imgw && e.getY() < ( viewPortHeight /2)+50 && e.getY() > ( viewPortHeight /2)-50) {
+		if ( mouseX > viewPortWidth - imgw && e.getY() < ( viewPortHeight / 2 ) + 50 && e.getY() > ( viewPortHeight / 2 ) - 50 )
+		{
 			collapsed = !collapsed;
 		}
 		repaint = true;
-		viewer.requestRepaint();
+		bdvUIPanel.collapseUI();
+		bdvUIPanel.getViewerPanel().requestRepaint();
 	}
 
 	@Override
