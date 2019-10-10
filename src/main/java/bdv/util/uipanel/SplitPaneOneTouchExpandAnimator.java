@@ -52,10 +52,10 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 
 	public SplitPaneOneTouchExpandAnimator( final BdvUIPanel viewer ) throws IOException
 	{
-		rightarrow = ImageIO.read( SplitPaneOneTouchExpandAnimator.class.getResource( "rightarrow_small.png" ) );
-		leftarrow = ImageIO.read( SplitPaneOneTouchExpandAnimator.class.getResource( "leftarrow_small.png" ) );
+		rightarrow = ImageIO.read( SplitPaneOneTouchExpandAnimator.class.getResource( "rightdoublearrow_tiny.png" ) );
+		leftarrow = ImageIO.read( SplitPaneOneTouchExpandAnimator.class.getResource( "leftdoublearrow_tiny.png" ) );
 		this.imgw = leftarrow.getWidth();
-		this.imgh = leftarrow.getHeight();
+		this.imgh = leftarrow.getHeight() + 2;
 		this.imgX = 0;
 		this.bdvUIPanel = viewer;
 	}
@@ -253,7 +253,7 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 				AlphaComposite.SRC_OVER, Math.min( alpha, backgroundAlpha ) );
 		g.setColor( Color.black );
 		g.setComposite( alcom );
-		g.fillRoundRect( x, y, width, height, 50, 50 );
+		g.fillRoundRect( x, y, width, height, 25, 25 );
 	}
 
 	private void drawImg( final Graphics2D g, final BufferedImage img, final int x, final int y, final float alpha )
