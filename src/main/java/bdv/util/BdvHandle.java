@@ -145,15 +145,7 @@ public abstract class BdvHandle implements Bdv
 		if ( initTransformPending )
 		{
 			initTransformPending = false;
-
 			InitializeViewerState.initTransform( viewer );
-			if ( bdvOptions.values.is2D() )
-			{
-				final AffineTransform3D t = new AffineTransform3D();
-				viewer.getState().getViewerTransform( t );
-				t.set( 0, 2, 3 );
-				viewer.setCurrentViewerTransform( t );
-			}
 		}
 	}
 
