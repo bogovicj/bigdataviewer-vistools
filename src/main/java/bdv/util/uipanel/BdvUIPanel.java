@@ -213,29 +213,29 @@ public class BdvUIPanel extends BdvHandle
 		splitPane = new JSplitPane( JSplitPane.HORIZONTAL_SPLIT );
 		splitPane.setBorder( null );
 		splitPane.setUI( new BasicSplitPaneUI()
-						 {
-							 public BasicSplitPaneDivider createDefaultDivider()
-							 {
-								 return new BasicSplitPaneDivider( this )
-								 {
-									 private static final long serialVersionUID = 1L;
+		{
+			public BasicSplitPaneDivider createDefaultDivider()
+			{
+				return new BasicSplitPaneDivider( this )
+				{
+					private static final long serialVersionUID = 1L;
 
-									 @Override
-									 public void paint( Graphics g )
-									 {
-										 g.setColor( Color.white );
-										 g.fillRect( 0, 0, getSize().width, getSize().height );
-										 super.paint( g );
-									 }
+					@Override
+					public void paint( Graphics g )
+					{
+						g.setColor( Color.white );
+						g.fillRect( 0, 0, getSize().width, getSize().height );
+						super.paint( g );
+					}
 
-									 @Override
-									 public void setBorder( final Border border )
-									 {
-										 super.setBorder( null );
-									 }
-								 };
-							 }
-						 });
+					@Override
+					public void setBorder( final Border border )
+					{
+						super.setBorder( null );
+					}
+				};
+			}
+		} );
 
 		setDividerSize();
 
@@ -350,11 +350,12 @@ public class BdvUIPanel extends BdvHandle
 	 */
 	public void collapseUI()
 	{
-		if (this.splitPane.getDividerLocation() < this.splitPane.getMaximumDividerLocation())
+		if ( this.splitPane.getDividerLocation() < this.splitPane.getMaximumDividerLocation() )
 		{
 			this.splitPane.setDividerSize( 0 );
 			this.splitPane.setDividerLocation( 1.0d );
-		}else
+		}
+		else
 		{
 			this.splitPane.setDividerLocation( this.splitPane.getLastDividerLocation() );
 			setDividerSize();
