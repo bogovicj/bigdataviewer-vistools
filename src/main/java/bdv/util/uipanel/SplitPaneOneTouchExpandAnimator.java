@@ -265,7 +265,7 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 	}
 
 	@Override
-	public boolean isRepaint()
+	public boolean isComplete()
 	{
 		return false;
 	}
