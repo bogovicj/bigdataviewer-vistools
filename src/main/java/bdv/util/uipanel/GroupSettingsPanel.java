@@ -471,7 +471,11 @@ public class GroupSettingsPanel extends JPanel
 		@Override
 		public int compareTo( final SourceEntry o )
 		{
-			return getName().compareTo( o.getName() );
+			// TODO: In the multi-channel case getNames() can return null.
+			if ( o.getName() == null)
+				return -1;
+			else
+				return getName().compareTo( o.getName() );
 		}
 
 		@Override
