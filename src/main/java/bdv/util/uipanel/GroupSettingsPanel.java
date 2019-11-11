@@ -9,11 +9,11 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ItemEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
+import javax.swing.AbstractListModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -27,6 +27,8 @@ import javax.swing.ListCellRenderer;
 import javax.swing.LookAndFeel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.swing.plaf.basic.BasicSplitPaneDivider;
@@ -92,15 +94,20 @@ public class GroupSettingsPanel extends JPanel
 	/**
 	 * Sources which are part of the selected group.
 	 */
-	private final JPanel selectedSources;
+	private final JList< SourceEntry > selectedSourcesList;
+
+	private final SourceListModel remainingSourceListModel;
 
 	/**
 	 * Sources which are not part of the selected group.
 	 */
-	private final JPanel remainingSources;
+	private final JList< SourceEntry > remainingSourcesList;
+
+	private final SourceListModel selectedSourceListModel;
 
 	/**
-	 * @param protectedGroups groups that cannot be deleted (i.e., the "All" group).
+	 * @param protectedGroups
+	 * 		groups that cannot be deleted (i.e., the "All" group).
 	 */
 	public GroupSettingsPanel(
 			final ViewerPanel viewerPanel,
@@ -130,16 +137,53 @@ public class GroupSettingsPanel extends JPanel
 		removeGroup.setForeground( FOREGROUND_COLOR );
 		removeGroup.setBackground( BACKGROUND_COLOR );
 
-		// panel which holds all sources which are part of the selected group
-		selectedSources = new JPanel( new MigLayout( "fillx", "[grow]", "[]" ) );
-		selectedSources.setBackground( BACKGROUND_COLOR );
-		selectedSources.setBorder( null );
+		// selected sources list holds all sources which are part of the selected groupp
+		selectedSourcesList = new JList<>();
+		selectedSourcesList.setBackground( BACKGROUND_COLOR );
+		selectedSourcesList.setBorder( null );
 
-		// panel which holds all sources which are NOT part of the selected
-		// group
-		remainingSources = new JPanel( new MigLayout( "fillx", "[grow]", "[]" ) );
-		remainingSources.setBackground( BACKGROUND_COLOR );
-		remainingSources.setBorder( null );
+		selectedSourceListModel = new SourceListModel( this.sourceNameBimap );
+		selectedSourcesList.setModel( selectedSourceListModel );
+		selectedSourcesList.addListSelectionListener( new ListSelectionListener()
+		{
+			@Override
+			public void valueChanged( final ListSelectionEvent e )
+			{
+				if ( !e.getValueIsAdjusting() && selectedSourcesList.getSelectedIndex() >= 0 )
+				{
+					final SourceEntry selectedSource = selectedSourceListModel.getElementAt( selectedSourcesList.getSelectedIndex() );
+					selectedSourceListModel.remove( selectedSource );
+					remainingSourceListModel.add( selectedSource );
+
+					sourceIndexHelper.removeSourceFromGroup( selectedSource.source, sourceIndexHelper.getCurrentGroup() );
+					selectedSourcesList.clearSelection();
+				}
+			}
+		} );
+
+		// remaining sources list holds all sources which are not part of the selected group
+		remainingSourcesList = new JList<>();
+		remainingSourcesList.setBackground( BACKGROUND_COLOR );
+		remainingSourcesList.setBorder( null );
+
+		remainingSourceListModel = new SourceListModel( this.sourceNameBimap );
+		remainingSourcesList.setModel( remainingSourceListModel );
+		remainingSourcesList.addListSelectionListener( new ListSelectionListener()
+		{
+			@Override
+			public void valueChanged( final ListSelectionEvent e )
+			{
+				if ( !e.getValueIsAdjusting() && remainingSourcesList.getSelectedIndex() >= 0 )
+				{
+					final SourceEntry selectedSource = remainingSourceListModel.getElementAt( remainingSourcesList.getSelectedIndex() );
+					remainingSourceListModel.remove( selectedSource );
+					selectedSourceListModel.add( selectedSource );
+
+					sourceIndexHelper.addSourceToGroup( selectedSource.source, sourceIndexHelper.getCurrentGroup() );
+					remainingSourcesList.clearSelection();
+				}
+			}
+		} );
 
 		// the split pane holding selected and remaining sources
 		selection = new JSplitPane( JSplitPane.VERTICAL_SPLIT );
@@ -167,12 +211,12 @@ public class GroupSettingsPanel extends JPanel
 		selection.setBackground( BACKGROUND_COLOR );
 		selection.setForeground( FOREGROUND_COLOR );
 		selection.setBorder( null );
-		final JScrollPane scrollPaneTop = new JScrollPane( selectedSources, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+		final JScrollPane scrollPaneTop = new JScrollPane( selectedSourcesList, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 		scrollPaneTop.getVerticalScrollBar().setUI( new WhiteScrollBarUI() );
 		scrollPaneTop.getHorizontalScrollBar().setUI( new WhiteScrollBarUI() );
 		selection.setTopComponent( scrollPaneTop );
-		final JScrollPane scrollPaneBottom = new JScrollPane( remainingSources, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+		final JScrollPane scrollPaneBottom = new JScrollPane( remainingSourcesList, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
 		scrollPaneBottom.getVerticalScrollBar().setUI( new WhiteScrollBarUI() );
 		scrollPaneBottom.getHorizontalScrollBar().setUI( new WhiteScrollBarUI() );
@@ -256,7 +300,7 @@ public class GroupSettingsPanel extends JPanel
 
 		// visGro --> ui elements
 		visGro.addUpdateListener( e -> {
-			switch( e.id )
+			switch ( e.id )
 			{
 			case VisibilityAndGrouping.Event.CURRENT_GROUP_CHANGED:
 				final SourceGroup group = sourceIndexHelper.getCurrentGroup();
@@ -304,66 +348,17 @@ public class GroupSettingsPanel extends JPanel
 	 */
 	private void updateGroupSourceComponent()
 	{
-		selectedSources.removeAll();
-		remainingSources.removeAll();
+		selectedSourceListModel.removeAll();
+		remainingSourceListModel.removeAll();
 
 		final SourceGroup group = sourceIndexHelper.getCurrentGroup();
 		viewerPanel.getState().getSources().forEach( sourceState -> {
 			final Source< ? > source = sourceState.getSpimSource();
 			if ( sourceIndexHelper.contains( group, source ) )
-				selectedSources.add( createEntry( source, group ), "growx, wrap" );
+				selectedSourceListModel.add( source );
 			else
-				remainingSources.add( createEntry( source, group ), "growx, wrap" );
-			repaintComponents();
+				remainingSourceListModel.add( source );
 		} );
-	}
-
-	/**
-	 * TODO
-	 * Creates JLabel for one source in the group source lists
-	 */
-	private Component createEntry( final Source< ? > source, final SourceGroup group )
-	{
-		final JLabel p = new JLabel( sourceNameBimap.getName( source ) );
-		p.setBackground( BACKGROUND_COLOR );
-		p.setForeground( FOREGROUND_COLOR );
-		p.setBorder( null );
-		p.addMouseListener( new MouseAdapter()
-		{
-			@Override
-			public void mouseReleased( final MouseEvent e )
-			{
-				if ( selection.isEnabled() ) // TODO
-				{
-					if ( sourceIndexHelper.contains( group, source ) )
-					{
-						selectedSources.remove( p );
-						remainingSources.add( p, "growx, wrap" );
-						sourceIndexHelper.removeSourceFromGroup( source, group );
-					}
-					else
-					{
-						remainingSources.remove( p );
-						selectedSources.add( p, "growx, wrap" );
-						sourceIndexHelper.addSourceToGroup( source, group );
-					}
-
-					repaintComponents();
-				}
-			}
-		} );
-		return p;
-	}
-
-	/**
-	 * TODO
-	 */
-	private void repaintComponents()
-	{
-		selectedSources.revalidate();
-		remainingSources.revalidate();
-		selectedSources.repaint();
-		remainingSources.repaint();
 	}
 
 	/**
@@ -378,18 +373,8 @@ public class GroupSettingsPanel extends JPanel
 		groupsComboBox.setEnabled( enabled );
 		singleGroupModeCheckbox.setEnabled( enabled );
 		selection.setEnabled( enabled );
-		selectedSources.setEnabled( enabled );
-		remainingSources.setEnabled( enabled );
-		for ( final Component c : selectedSources.getComponents() )
-		{
-			if ( c instanceof JLabel )
-				c.setEnabled( enabled );
-		}
-		for ( final Component c : remainingSources.getComponents() )
-		{
-			if ( c instanceof JLabel )
-				c.setEnabled( enabled );
-		}
+		selectedSourcesList.setEnabled( enabled );
+		remainingSourcesList.setEnabled( enabled );
 		removeGroup.setEnabled( !protectedGroups.contains( sourceIndexHelper.getCurrentGroup() ) );
 		super.setEnabled( enabled );
 	}
@@ -462,6 +447,95 @@ public class GroupSettingsPanel extends JPanel
 			button.setBorder( new LineBorder( BACKGROUND_COLOR ) );
 			button.setBackground( BACKGROUND_COLOR );
 			return button;
+		}
+	}
+
+	class SourceEntry implements Comparable< SourceEntry >
+	{
+
+		private final SourceNameBimap sourceNames;
+
+		private Source source;
+
+		public SourceEntry( final Source source, final SourceNameBimap sourceNames )
+		{
+			this.source = source;
+			this.sourceNames = sourceNames;
+		}
+
+		public String getName()
+		{
+			return sourceNames.getName( source );
+		}
+
+		@Override
+		public int compareTo( final SourceEntry o )
+		{
+			return getName().compareTo( o.getName() );
+		}
+
+		@Override
+		public String toString()
+		{
+			return sourceNames.getName( source );
+		}
+	}
+
+	class SourceListModel extends AbstractListModel< SourceEntry >
+	{
+
+		private final SourceNameBimap sourceNames;
+
+		private TreeSet< SourceEntry > elements;
+
+		public SourceListModel( final SourceNameBimap sourceNames )
+		{
+			this.elements = new TreeSet<>();
+			this.sourceNames = sourceNames;
+		}
+
+		@Override
+		public int getSize()
+		{
+			return this.elements.size();
+		}
+
+		@Override
+		public SourceEntry getElementAt( final int index )
+		{
+			return ( SourceEntry ) this.elements.toArray()[ index ];
+		}
+
+		public void add( final Source source )
+		{
+			if ( elements.add( new SourceEntry( source, sourceNames ) ) )
+			{
+				fireContentsChanged( this, 0, getSize() );
+			}
+		}
+
+		public void remove( final SourceEntry source )
+		{
+			if ( elements.remove( source ) )
+			{
+				fireContentsChanged( this, 0, getSize() );
+			}
+		}
+
+		public void add( final SourceEntry sourceEntry )
+		{
+			if ( elements.add( sourceEntry ) )
+			{
+				fireContentsChanged( this, 0, getSize() );
+			}
+		}
+
+		public void removeAll()
+		{
+			if ( elements.removeAll( elements ) )
+			{
+				fireContentsChanged( this, 0, getSize() );
+			}
 		}
 	}
 }
