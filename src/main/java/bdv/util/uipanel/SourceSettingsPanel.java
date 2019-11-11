@@ -8,6 +8,8 @@ import bdv.viewer.VisibilityAndGrouping;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -78,8 +80,33 @@ public class SourceSettingsPanel extends JPanel
 
 		// source selection combobox
 		sourcesComboBox = new JComboBox<>();
-		sourcesComboBox.setMaximumSize( new Dimension( 270, 30 ) );
+		sourcesComboBox.setMaximumSize( new Dimension( 100, 26 ) );
 		sourcesComboBox.setRenderer( new SourceComboBoxRenderer() );
+
+		this.addComponentListener( new ComponentListener()
+		{
+			@Override
+			public void componentResized( final ComponentEvent e )
+			{
+				sourcesComboBox.setMaximumSize( new Dimension( Math.max( e.getComponent().getWidth() - 120, 20 ), 26 ) );
+				sourcesComboBox.revalidate();
+			}
+
+			@Override
+			public void componentMoved( final ComponentEvent e )
+			{
+			}
+
+			@Override
+			public void componentShown( final ComponentEvent e )
+			{
+			}
+
+			@Override
+			public void componentHidden( final ComponentEvent e )
+			{
+			}
+		} );
 		sourcesComboBox.setBackground( BACKGROUND_COLOR );
 		add( sourcesComboBox, "growx" );
 
@@ -141,7 +168,7 @@ public class SourceSettingsPanel extends JPanel
 
 		// visGro --> ui elements
 		visGro.addUpdateListener( e -> {
-			switch( e.id )
+			switch ( e.id )
 			{
 			case VisibilityAndGrouping.Event.CURRENT_SOURCE_CHANGED:
 				final Source< ? > source = sourceIndexHelper.getCurrentSource();
