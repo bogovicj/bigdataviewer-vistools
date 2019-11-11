@@ -294,10 +294,10 @@ public class SplitPaneOneTouchExpandAnimator implements OverlayAnimator, MouseMo
 		if ( mouseX > viewPortWidth - imgw && e.getY() < ( viewPortHeight / 2 ) + 50 && e.getY() > ( viewPortHeight / 2 ) - 50 )
 		{
 			collapsed = !collapsed;
+			repaint = true;
+			bdvUIPanel.collapseUI();
+			bdvUIPanel.getViewerPanel().requestRepaint();
 		}
-		repaint = true;
-		bdvUIPanel.collapseUI();
-		bdvUIPanel.getViewerPanel().requestRepaint();
 	}
 
 	@Override
